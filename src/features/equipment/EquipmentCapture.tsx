@@ -77,7 +77,9 @@ async function stackInk(context: CanvasRenderingContext2D, rects: CaptureRect[])
   const rows = rects.slice(0, 64)
   if (rows.length === 0) return null
   const scaleX = 3
-  const scaleY = 2.5
+  // Windows OCR loses small strokes when rows are stretched by different ratios.
+  // Keep glyphs proportional; the 3x scale restores enough detail from game text.
+  const scaleY = scaleX
   const gap = 16
   const pad = 16
   let width = 80
@@ -894,3 +896,4 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     </div>
   )
 }
+
