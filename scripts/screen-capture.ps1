@@ -46,23 +46,24 @@ public static class JmsCap {
   }
 
   public static string GameRect() {
-    string maple = "\u30e1\u30a4\u30d7\u30eb";
+    POINT point;
+    bool hasCursor = GetCursorPos(out point);
     int bestArea = 0;
     string best = "";
     foreach (System.Diagnostics.Process proc in System.Diagnostics.Process.GetProcesses()) {
       try {
         if (proc.MainWindowHandle == IntPtr.Zero) continue;
         string name = proc.ProcessName ?? "";
-        string title = proc.MainWindowTitle ?? "";
-        bool match = name.StartsWith("MapleStory", StringComparison.OrdinalIgnoreCase)
-          || title.IndexOf("MapleStory", StringComparison.OrdinalIgnoreCase) >= 0
-          || title.IndexOf(maple, StringComparison.Ordinal) >= 0;
+        bool match = name.StartsWith("MapleStory", StringComparison.OrdinalIgnoreCase);
         if (!match) continue;
         RECT rect;
         if (!GetWindowRect(proc.MainWindowHandle, out rect)) continue;
         int width = rect.Right - rect.Left;
         int height = rect.Bottom - rect.Top;
         if (width < 200 || height < 200) continue;
+        if (hasCursor && (point.X < rect.Left || point.X >= rect.Right || point.Y < rect.Top || point.Y >= rect.Bottom)) {
+          continue;
+        }
         int area = width * height;
         if (area <= bestArea) continue;
         bestArea = area;
@@ -75,13 +76,7 @@ public static class JmsCap {
 }
 "@
 
-$script:CachedRect = $null
-$script:CachedAt = [datetime]::MinValue
-
 function Get-CaptureRect {
-  if ($script:CachedRect -and ((Get-Date) - $script:CachedAt).TotalSeconds -lt 20) {
-    return ,$script:CachedRect
-  }
   $text = [JmsCap]::GameRect()
   if ([string]::IsNullOrWhiteSpace($text)) {
     $cursor = [JmsCap]::CursorAt()
@@ -94,15 +89,13 @@ function Get-CaptureRect {
     $text = "$($screen.X),$($screen.Y),$($screen.Width),$($screen.Height),screen"
   }
   $parts = $text.Split(',')
-  $script:CachedRect = @{
+  return @{
     X = [int]$parts[0]
     Y = [int]$parts[1]
     W = [int]$parts[2]
     H = [int]$parts[3]
     Source = $parts[4]
   }
-  $script:CachedAt = Get-Date
-  return ,$script:CachedRect
 }
 
 function Save-Png([int]$X, [int]$Y, [int]$Width, [int]$Height) {

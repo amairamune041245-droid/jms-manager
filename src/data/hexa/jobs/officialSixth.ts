@@ -65,10 +65,14 @@ function preferHostedIcon(current: string | undefined, official: string | undefi
 }
 
 function masteryName(officialName: string): string {
-  const base = officialName.replace(/(?<=\p{Script=Han}|\p{Script=Hiragana}|\p{Script=Katakana})(?:III|II|I)$/u, '')
+  const base = officialName
+    .replace(/^アドバンスド/, '')
+    .replace(/最終強化$/, '')
+    .replace(/(?<=\p{Script=Han}|\p{Script=Hiragana}|\p{Script=Katakana}|ー)(?:Ⅳ|Ⅲ|Ⅱ|Ⅰ|IV|III|II|I|ll)$/u, '')
   return base.endsWith('Ⅵ') ? base : `${base}Ⅵ`
 }
 
 function enhanceName(officialName: string): string {
-  return officialName.endsWith('強化') ? officialName : `${officialName}強化`
+  const base = officialName.replace(/サージサージ$/, 'サージ')
+  return base.endsWith('強化') ? base : `${base}強化`
 }

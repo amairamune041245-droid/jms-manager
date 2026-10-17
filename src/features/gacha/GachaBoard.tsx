@@ -18,16 +18,42 @@ export function GachaBoard() {
     setNote('画面を取り込んでいます。')
     try {
       const response = await fetch('/api/screen-frame', { cache: 'no-store' })
-      if (!response.ok) {
-        setNote('画面を読めませんでした。ゲームを手前に出して、もう一度押してください。')
+      if (response.ok) {
+        const blob = await response.blob()
+        if (preview) URL.revokeObjectURL(preview)
+        setPreview(URL.createObjectURL(blob))
+        setNote('画面を取り込みました。出たアイテム名を確認して、集計してください。')
         return
       }
-      const blob = await response.blob()
+    } catch {
+      // Fall back to browser screen capture below
+    }
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      setNote('画面を読めませんでした。ゲームを手前に出して、もう一度押してください。')
+      return
+    }
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false })
+      const video = document.createElement('video')
+      video.muted = true
+      video.playsInline = true
+      video.srcObject = stream
+      await video.play()
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, video.videoWidth)
+      canvas.height = Math.max(1, video.videoHeight)
+      canvas.getContext('2d')?.drawImage(video, 0, 0)
+      for (const track of stream.getTracks()) track.stop()
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/png'))
+      if (!blob) {
+        setNote('画面を読めませんでした。')
+        return
+      }
       if (preview) URL.revokeObjectURL(preview)
       setPreview(URL.createObjectURL(blob))
       setNote('画面を取り込みました。出たアイテム名を確認して、集計してください。')
     } catch {
-      setNote('画面を読めませんでした。ゲームを手前に出して、もう一度押してください。')
+      setNote('画面の共有がキャンセルされました。もう一度押して画面を選んでください。')
     }
   }
 

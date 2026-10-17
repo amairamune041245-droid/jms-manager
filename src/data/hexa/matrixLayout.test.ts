@@ -34,7 +34,9 @@ describe('HEXA matrix slots', () => {
     expect(cannon.skills.find((skill) => skill.id === 'cannoneer-enhance-flag')?.iconUrl).toContain(
       'media.maplestorywiki.net',
     )
-    expect(hexaCatalogForJob('hayato').skills.find((skill) => skill.role === 'mastery')?.iconUrl).toBeUndefined()
+    expect(hexaCatalogForJob('hayato').skills.find((skill) => skill.role === 'mastery')?.iconUrl).toContain(
+      'static.nexon.co.jp',
+    )
     expect(hexaCatalogForJob('kanna').skills.find((skill) => skill.role === 'boost')).toBeUndefined()
     expect(slots.find((slot) => slot.id === 'janus')?.skill?.kmsSkillId).toBe(500001000)
     const ice = bindMatrixSlots(hexaCatalogForJob('archmage-il').skills)
@@ -49,6 +51,7 @@ describe('HEXA matrix slots', () => {
     expect(ice.find((slot) => slot.id === 'mastery-1')?.skill?.name).toBe('ライトニングスフィアⅥ')
     expect(ice.find((slot) => slot.id === 'mastery-0')?.skill?.name).toBe('サンダースフィアⅥ')
     expect(ice.find((slot) => slot.id === 'enhance-0')?.skill?.name).toBe('フロストアーク強化')
+    expect(ice.find((slot) => slot.id === 'enhance-0')?.skill?.iconUrl).toContain('Skill_Frost_Ark.png')
     expect(ice.find((slot) => slot.id === 'common-0')?.skill?.name).toBe('アルカナオーバーライドⅥ')
     expect(ice.find((slot) => slot.id === 'common-locked')?.skill).toBeNull()
     expect(ice.find((slot) => slot.id === 'janus')?.x).toBe(299)
@@ -65,13 +68,18 @@ describe('HEXA matrix slots', () => {
     expect(slots.find((slot) => slot.id === 'janus')?.skill?.name).toBe('ソルヤーヌス')
   })
 
-  it('shows origin, four masteries, four enhances and a shared core for every job', () => {
+  it('shows origin, four masteries, four enhances and a shared core with valid hosted icons for every job', () => {
     for (const job of JOBS) {
       const slots = bindMatrixSlots(hexaCatalogForJob(job.id).skills)
       expect(slots.find((slot) => slot.id === 'origin')?.skill?.name, job.id).toBeTruthy()
       expect(slots.filter((slot) => slot.group === 'mastery' && slot.skill), job.id).toHaveLength(4)
       expect(slots.filter((slot) => slot.group === 'enhance' && slot.skill), job.id).toHaveLength(4)
       expect(slots.find((slot) => slot.id === 'common-0')?.skill?.name, job.id).toBeTruthy()
+      for (const slot of slots) {
+        if (!slot.skill) continue
+        expect(slot.skill.iconUrl, `${job.id}:${slot.id}:${slot.skill.name}`).toBeTruthy()
+        expect(slot.skill.iconUrl, `${job.id}:${slot.id}:${slot.skill.name}`).not.toContain('namu.wiki')
+      }
     }
     expect(bindMatrixSlots(hexaCatalogForJob('kanna').skills).find((slot) => slot.id === 'skill-extra')?.skill).toBeNull()
     expect(bindMatrixSlots(hexaCatalogForJob('soulmaster').skills).find((slot) => slot.id === 'origin')?.skill?.name).toBe(

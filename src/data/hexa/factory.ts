@@ -69,7 +69,7 @@ export function jobCatalog(
         id: `${jobId}-${skill.id}`,
         name: skill.name,
         kind: coreKind(skill),
-        role: isShared(skill) ? 'common' : skill.role,
+        role: isShared(skill) ? ('common' as const) : skill.role,
         description: skill.description,
         maxLevel: 30 as const,
         jmsStatus:

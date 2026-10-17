@@ -543,4 +543,28 @@ describe('real equipment screenshot', () => {
     expect(reading?.characterVisible).toBe(true)
     expect(reading?.presetIndex).toBe(1)
   })
+
+  it('finds the equipment window inside a wide browser viewport with sidebar elements', () => {
+    const win = sampleWindow()
+    const browser = image(960, 440, [246, 246, 246])
+    const offsetX = 280
+    const offsetY = 40
+    for (let y = 0; y < win.height; y += 1) {
+      for (let x = 0; x < win.width; x += 1) {
+        const src = (y * win.width + x) * 4
+        const dst = ((offsetY + y) * browser.width + (offsetX + x)) * 4
+        browser.data[dst] = win.data[src] ?? 0
+        browser.data[dst + 1] = win.data[src + 1] ?? 0
+        browser.data[dst + 2] = win.data[src + 2] ?? 0
+        browser.data[dst + 3] = 255
+      }
+    }
+    // Sidebar icon aligned with the weapon row to the left of the equipment window
+    fillRect(browser, 40, offsetY + ORIGIN_Y + 4 * PITCH, SIZE, SIZE, [60, 80, 120])
+    const reading = locateEquipmentWindow(browser)
+    expect(reading).not.toBeNull()
+    expect(reading?.grid.originX).toBe(offsetX + ORIGIN_X)
+    expect(reading?.grid.originY).toBe(offsetY + ORIGIN_Y)
+    expect(reading?.slots.filter((slot) => slot.state === 'filled').length).toBe(25)
+  })
 })

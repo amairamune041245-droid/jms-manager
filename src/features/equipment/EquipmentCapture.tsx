@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   chooseHoveredSlot,
-  isTooltipInk,
   locateEquipmentWindow,
   preferStableGrid,
   rankSlotIcons,
@@ -18,6 +17,7 @@ import type {
 } from '../../domain/equipmentCapture.ts'
 import { matchItemName, slotGroupForItem } from '../../domain/equipmentSets.ts'
 import { parseTooltipLines } from '../../domain/tooltipText.ts'
+import type { TooltipDetails } from '../../domain/tooltipText.ts'
 import { EQUIPMENT_SLOTS, slotById } from '../../domain/equipmentSlots.ts'
 import type { EquipmentSlotGroup, EquipmentSlotId } from '../../domain/equipmentSlots.ts'
 import { useAppStore } from '../app/useAppStore.ts'
@@ -30,36 +30,69 @@ type Frame = {
   cursor: { x: number; y: number } | null
 }
 
+function invertInkToWhite(target: CanvasRenderingContext2D, width: number, height: number) {
+  const pixels = target.getImageData(0, 0, width, height)
+  for (let index = 0; index < pixels.data.length; index += 4) {
+    const r = pixels.data[index] ?? 0
+    const g = pixels.data[index + 1] ?? 0
+    const b = pixels.data[index + 2] ?? 0
+    const lum = Math.max(r, g, b)
+    const ink = Math.max(0, Math.min(255, Math.round(Math.max(0, lum - 58) * 1.5)))
+    const color = 255 - ink
+    pixels.data[index] = color
+    pixels.data[index + 1] = color
+    pixels.data[index + 2] = color
+    pixels.data[index + 3] = 255
+  }
+  target.putImageData(pixels, 0, 0)
+}
+
 async function cropBlob(
   context: CanvasRenderingContext2D,
   rect: CaptureRect,
-  scale: number,
+  scale = 3.5,
 ): Promise<Blob | null> {
+  const pad = 14
+  const rx = Math.max(0, rect.x - 3)
+  const ry = Math.max(0, rect.y - 2)
+  const rw = Math.min(context.canvas.width - rx, rect.w + 6)
+  const rh = Math.min(context.canvas.height - ry, rect.h + 4)
+  const w = Math.max(1, Math.round(rw * scale))
+  const h = Math.max(1, Math.round(rh * scale))
   const canvas = document.createElement('canvas')
-  canvas.width = Math.max(1, Math.round(rect.w * scale))
-  canvas.height = Math.max(1, Math.round(rect.h * scale))
-  const target = canvas.getContext('2d')
+  canvas.width = w + pad * 2
+  canvas.height = h + pad * 2
+  const target = canvas.getContext('2d', { willReadFrequently: true })
   if (!target) return null
-  target.imageSmoothingEnabled = false
-  target.drawImage(context.canvas, rect.x, rect.y, rect.w, rect.h, 0, 0, canvas.width, canvas.height)
+  target.imageSmoothingEnabled = true
+  target.imageSmoothingQuality = 'high'
+  target.fillStyle = '#000'
+  target.fillRect(0, 0, canvas.width, canvas.height)
+  target.drawImage(context.canvas, rx, ry, rw, rh, pad, pad, w, h)
+  invertInkToWhite(target, canvas.width, canvas.height)
   return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob), 'image/png'))
 }
 
 async function stackInk(context: CanvasRenderingContext2D, rects: CaptureRect[]): Promise<Blob | null> {
   const rows = rects.slice(0, 28)
   if (rows.length === 0) return null
-  const gap = 18
-  const pad = 14
+  const scaleX = 3
+  const scaleY = 2.5
+  const gap = 16
+  const pad = 16
   let width = 80
   let height = pad
   const placed = rows.map((rect) => {
-    const scale = Math.max(3, Math.ceil(56 / Math.max(1, rect.h)))
-    const w = Math.max(1, Math.round(rect.w * scale))
-    const h = Math.max(56, Math.round(rect.h * scale))
+    const rx = Math.max(0, rect.x - 4)
+    const ry = Math.max(0, rect.y - 2)
+    const rw = Math.min(context.canvas.width - rx, rect.w + 8)
+    const rh = Math.min(context.canvas.height - ry, rect.h + 4)
+    const w = Math.max(1, Math.round(rw * scaleX))
+    const h = Math.max(1, Math.round(rh * scaleY))
     const y = height
     height += h + gap
     width = Math.max(width, w + pad * 2)
-    return { rect, w, h, y }
+    return { rect: { x: rx, y: ry, w: rw, h: rh }, w, h, y }
   })
   height += pad
   const canvas = document.createElement('canvas')
@@ -67,22 +100,14 @@ async function stackInk(context: CanvasRenderingContext2D, rects: CaptureRect[])
   canvas.height = height
   const target = canvas.getContext('2d', { willReadFrequently: true })
   if (!target) return null
-  target.imageSmoothingEnabled = false
+  target.imageSmoothingEnabled = true
+  target.imageSmoothingQuality = 'high'
   target.fillStyle = '#000'
   target.fillRect(0, 0, width, height)
   for (const row of placed) {
     target.drawImage(context.canvas, row.rect.x, row.rect.y, row.rect.w, row.rect.h, pad, row.y, row.w, row.h)
   }
-  const pixels = target.getImageData(0, 0, width, height)
-  for (let index = 0; index < pixels.data.length; index += 4) {
-    const on = isTooltipInk(pixels.data[index] ?? 0, pixels.data[index + 1] ?? 0, pixels.data[index + 2] ?? 0)
-    const color = on ? 255 : 0
-    pixels.data[index] = color
-    pixels.data[index + 1] = color
-    pixels.data[index + 2] = color
-    pixels.data[index + 3] = 255
-  }
-  target.putImageData(pixels, 0, 0)
+  invertInkToWhite(target, width, height)
   return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob), 'image/png'))
 }
 
@@ -131,7 +156,7 @@ function crop(
 }
 
 const idleNote =
-  '先にアイコンを取り込みます。装備情報は、説明の画像を出してから名前と★を付けます。'
+  '先にアイコンを取り込みます。装備情報は、説明の画像を出してから名前と★を付けます（Ctrl+Vでスクショ貼り付け・画像選択も可）。'
 
 const CONFIRM_GROUPS = new Set<EquipmentSlotGroup>([
   'ring',
@@ -146,9 +171,24 @@ const CONFIRM_GROUPS = new Set<EquipmentSlotGroup>([
 type TooltipPreview = {
   key: string
   imageUrl: string
+  iconUrl: string
   stars: number
   slotId: EquipmentSlotId | ''
   name: string
+  details: TooltipDetails | null
+}
+
+function detailPayload(fields: TooltipDetails | null | undefined) {
+  if (!fields) return {}
+  return {
+    ...(fields.stats.length > 0 ? { stats: fields.stats } : {}),
+    ...(fields.enhanceText ? { enhanceText: fields.enhanceText } : {}),
+    ...(fields.potentials.length > 0 ? { potentials: fields.potentials } : {}),
+    ...(fields.additionalPotentials.length > 0
+      ? { additionalPotentials: fields.additionalPotentials }
+      : {}),
+    ...(fields.notes ? { notes: fields.notes } : {}),
+  }
 }
 
 export function EquipmentCapture({ characterId }: { characterId: string }) {
@@ -157,7 +197,10 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
   const [failed, setFailed] = useState(false)
   const [note, setNote] = useState(idleNote)
   const [preview, setPreview] = useState<TooltipPreview | null>(null)
+  const [hasDisplayStream, setHasDisplayStream] = useState(false)
   const stopRef = useRef<(() => void) | null>(null)
+  const mediaRef = useRef<{ stream: MediaStream; video: HTMLVideoElement } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const noteRef = useRef(note)
   const pendingRef = useRef('')
   const keyRef = useRef('')
@@ -166,6 +209,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
   const emptyRef = useRef<Record<string, number>>({})
   const gridRef = useRef<WindowGrid | null>(null)
   const shownKeyRef = useRef('')
+  const confirmedSlotRef = useRef<{ key: string; slotId: EquipmentSlotId } | null>(null)
   const iconsRef = useRef<Map<string, { url: string; image: CaptureImage }>>(new Map())
   const sessionRef = useRef(0)
   const dataRef = useRef(data)
@@ -174,8 +218,21 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     dataRef.current = data
   }, [data])
 
+  function stopDisplayStream() {
+    const current = mediaRef.current
+    mediaRef.current = null
+    setHasDisplayStream(false)
+    if (current) {
+      for (const track of current.stream.getTracks()) track.stop()
+      current.video.srcObject = null
+    }
+  }
+
   useEffect(() => {
-    return () => stopRef.current?.()
+    return () => {
+      stopRef.current?.()
+      stopDisplayStream()
+    }
   }, [])
 
   function show(text: string, error = false) {
@@ -195,6 +252,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     toneRef.current = {}
     emptyRef.current = {}
     shownKeyRef.current = ''
+    confirmedSlotRef.current = null
     setPreview(null)
     void fetch('/api/screen-frame', { method: 'DELETE' }).catch(() => undefined)
   }
@@ -205,18 +263,32 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     show('読み取りを止めました。')
   }
 
-  function readIcons({ image, context, cursor }: Frame) {
+  function ensureSlotIcon(slotId: EquipmentSlotId, iconUrl: string) {
+    const loadout = dataRef.current.loadoutsByCharacterId[characterId]
+    if (!loadout || !iconUrl) return
+    const existingId = loadout.presets[loadout.activePresetIndex].slots[slotId]
+    if (existingId && dataRef.current.items.some((entry) => entry.id === existingId)) return
+    captureEquipment(characterId, {
+      presetIndex: null,
+      portraitDataUrl: null,
+      slots: [{ id: slotId, occupied: true, imageDataUrl: iconUrl }],
+    })
+  }
+
+  function readIcons({ image, context, cursor }: Frame, immediate = false): boolean {
     const found = locateEquipmentWindow(image)
     if (!found) {
       pendingRef.current = ''
       seenRef.current = 0
-      show(
-        gridRef.current
-          ? '装備ウィンドウが説明などで隠れています。マウスを装備から外すと続けます。'
-          : '装備ウィンドウが見つかりません。ゲームの装備画面を開いて、手前に出してください。',
-        true,
-      )
-      return
+      if (!immediate) {
+        show(
+          gridRef.current
+            ? '装備ウィンドウが説明などで隠れています。マウスを装備から外すと続けます。'
+            : '装備ウィンドウが見つかりません。ゲームの装備画面を開いて、手前に出してください。',
+          true,
+        )
+      }
+      return false
     }
     const located = preferStableGrid(image, gridRef.current, found)
     gridRef.current = located.grid
@@ -227,24 +299,27 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     const signature = [String(located.presetIndex), ...held.map((slot) => `${slot.id}:${slot.state}:${slot.tone}`)].join(
       '|',
     )
-    if (signature !== pendingRef.current) {
+    if (!immediate && signature !== pendingRef.current) {
       pendingRef.current = signature
       seenRef.current = 1
       show('アイコンを確認しています（1/2）。マウスは装備から外しておいてください。')
-      return
+      return true
     }
+    pendingRef.current = signature
     seenRef.current += 1
     const presetLabel =
       located.presetIndex === null ? '今開いているプリセット' : `プリセット${located.presetIndex + 1}`
     const skipped = located.slots.length - visible.length
     const tail = skipped > 0 ? `隠れていた${skipped}枠は前のままです。` : ''
-    if (signature === keyRef.current) {
+    if (!immediate && signature === keyRef.current) {
       show(`${presetLabel}のアイコンは取り込み済みです。${tail}`)
-      return
+      return true
     }
-    const changed = held.filter((slot) => toneRef.current[slot.id] !== `${slot.state}:${slot.tone}`)
-    const portraitChanged = toneRef.current.character !== settleTone('character', characterTone)
-    if (changed.length === 0 && !portraitChanged && signature === keyRef.current) return
+    const changed = immediate
+      ? held
+      : held.filter((slot) => toneRef.current[slot.id] !== `${slot.state}:${slot.tone}`)
+    const portraitChanged = immediate || toneRef.current.character !== settleTone('character', characterTone)
+    if (changed.length === 0 && !portraitChanged && signature === keyRef.current) return true
     keyRef.current = signature
     for (const slot of changed) toneRef.current[slot.id] = `${slot.state}:${slot.tone}`
     if (portraitChanged) toneRef.current.character = settleTone('character', characterTone)
@@ -262,6 +337,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     }
     captureEquipment(characterId, input)
     show(`${presetLabel}のアイコンと中央の画像を取り込みました。${tail}`)
+    return true
   }
 
   function holdSlot(image: CaptureImage, slot: SlotReading) {
@@ -290,73 +366,96 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     return cursor != null && cursor.x >= 0 && cursor.y >= 0 && cursor.x < image.width && cursor.y < image.height
   }
 
-  async function readInfo({ image, context, cursor }: Frame) {
+  async function readInfo({ image, context, cursor }: Frame): Promise<boolean> {
     const session = sessionRef.current
-    if (!cursorInside(image, cursor)) {
+    if (cursor !== null && !cursorInside(image, cursor)) {
       show('マウスがゲーム画面の外にあります。メイプルのウィンドウ上へ動かしてください。')
-      return
+      return false
     }
-    const pointer = cursor ?? { x: 0, y: 0 }
     if (!gridRef.current) {
       const found = locateEquipmentWindow(image)
       if (found) gridRef.current = found.grid
     }
-    const hovered = readHoveredTooltip(image, pointer)
+    const hovered = readHoveredTooltip(image, cursor)
     if (!hovered) {
-      const under = gridRef.current ? slotAt(gridRef.current, pointer.x, pointer.y) : null
+      const under = cursor && gridRef.current ? slotAt(gridRef.current, cursor.x, cursor.y) : null
       show(
         under
           ? `${slotById(under).label}の上にカーソルがあります。説明が開いたら読みます。`
-          : 'カーソルの位置に説明がありません。装備の上で止めてください。',
+          : '説明ウィンドウが見つかりません。装備の上にマウスを乗せて説明を出してください。',
       )
-      return
+      return false
     }
     const shotKey = `${hovered.body.x}:${hovered.body.y}:${hovered.body.w}:${hovered.stars}`
     const shot = crop(context, hovered.body, 480, 'image/png')
-    const slots = await equippedIcons()
+    const iconUrl = crop(context, hovered.icon, 72, 'image/png')
+    let slots = await equippedIcons()
     if (slots.length === 0) {
-      show('先に「アイコンを取り込む」をしてください。', true)
-      return
+      const capturedNow = readIcons({ image, context, cursor }, true)
+      if (capturedNow) slots = await equippedIcons()
     }
-    const distances = rankSlotIcons(image, hovered.icon, slots)
+    const distances = slots.length > 0 ? rankSlotIcons(image, hovered.icon, slots) : []
     const onTooltip =
-      pointer.x >= hovered.body.x &&
-      pointer.y >= hovered.body.y &&
-      pointer.x < hovered.body.x + hovered.body.w &&
-      pointer.y < hovered.body.y + hovered.body.h
-    const cursorSlot = !onTooltip && gridRef.current ? slotAt(gridRef.current, pointer.x, pointer.y) : null
-    if (shownKeyRef.current === shotKey) return
+      cursor != null &&
+      cursor.x >= hovered.body.x &&
+      cursor.y >= hovered.body.y &&
+      cursor.x < hovered.body.x + hovered.body.w &&
+      cursor.y < hovered.body.y + hovered.body.h
+    const cursorSlot =
+      cursor && !onTooltip && gridRef.current ? slotAt(gridRef.current, cursor.x, cursor.y) : null
+    if (shownKeyRef.current === shotKey) return true
     shownKeyRef.current = shotKey
+    confirmedSlotRef.current = null
     setPreview({
       key: shotKey,
       imageUrl: shot,
+      iconUrl,
       stars: hovered.stars,
       slotId: cursorSlot ?? '',
       name: '',
+      details: null,
     })
     const readName = hovered.name ? matchItemName(await recognizeName(context, hovered.name)) : null
     const group = readName ? slotGroupForItem(readName) : null
-    const namedSlots = group
+    const equippedNamed = group
       ? slots.filter((slot) => slotById(slot.id).group === group).map((slot) => slot.id)
       : []
-    const slotId = cursorSlot ?? chooseHoveredSlot({ distances, cursorSlot, namedSlots })
+    const fallbackNamed = group
+      ? EQUIPMENT_SLOTS.filter((slot) => slot.group === group).map((slot) => slot.id)
+      : []
+    const namedSlots = equippedNamed.length > 0 ? equippedNamed : fallbackNamed
+    const slotId =
+      cursorSlot ??
+      chooseHoveredSlot({ distances, cursorSlot, namedSlots }) ??
+      (namedSlots.length === 1 ? (namedSlots[0] ?? null) : null)
     const needsConfirm = !slotId || CONFIRM_GROUPS.has(slotById(slotId).group)
     setPreview((current) =>
       current?.key === shotKey
         ? { ...current, slotId: slotId ?? current.slotId, name: readName ?? current.name }
         : current,
     )
-    if (sessionRef.current !== session) return
+    if (sessionRef.current !== session) return true
     if (needsConfirm || !slotId) {
       show(
         slotId
           ? `${slotById(slotId).label}の説明です。枠を確認して付けてください。`
           : '説明を取り込みました。付ける枠を選んでください。',
       )
-      return
+      void readDetails(context, image, hovered).then((detail) => {
+        if (sessionRef.current !== session || !detail) return
+        setPreview((current) =>
+          current?.key === shotKey ? { ...current, details: detail.fields } : current,
+        )
+        if (confirmedSlotRef.current?.key === shotKey) {
+          ensureSlotIcon(confirmedSlotRef.current.slotId, iconUrl)
+          setSlotEquipmentInfo(characterId, confirmedSlotRef.current.slotId, detailPayload(detail.fields))
+        }
+      })
+      return true
     }
     const chosenGroup = readName ? slotGroupForItem(readName) : null
     const nameFits = Boolean(readName && (!chosenGroup || slotById(slotId).group === chosenGroup))
+    ensureSlotIcon(slotId, iconUrl)
     setSlotEquipmentInfo(characterId, slotId, {
       starForce: hovered.stars,
       ...(nameFits && readName ? { name: readName } : {}),
@@ -364,16 +463,10 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     show(`${slotById(slotId).label}に${[nameFits ? readName : '', `★${hovered.stars}`].filter(Boolean).join('、')}を付けました。`)
     void readDetails(context, image, hovered).then((detail) => {
       if (sessionRef.current !== session || !detail) return
-      setSlotEquipmentInfo(characterId, slotId, {
-        ...(detail.fields.stats.length > 0 ? { stats: detail.fields.stats } : {}),
-        ...(detail.fields.enhanceText ? { enhanceText: detail.fields.enhanceText } : {}),
-        ...(detail.fields.potentials.length > 0 ? { potentials: detail.fields.potentials } : {}),
-        ...(detail.fields.additionalPotentials.length > 0
-          ? { additionalPotentials: detail.fields.additionalPotentials }
-          : {}),
-        ...(detail.fields.notes ? { notes: detail.fields.notes } : {}),
-      })
+      ensureSlotIcon(slotId, iconUrl)
+      setSlotEquipmentInfo(characterId, slotId, detailPayload(detail.fields))
     })
+    return true
   }
 
   async function readDetails(
@@ -390,7 +483,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
         method: 'POST',
         headers: { 'content-type': 'image/png' },
         body: blob,
-        signal: AbortSignal.timeout(4000),
+        signal: AbortSignal.timeout(6000),
       })
       if (!response.ok) return null
       const payload = (await response.json()) as { text?: string }
@@ -411,22 +504,25 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
       return
     }
     const slotId = preview.slotId
+    confirmedSlotRef.current = { key: preview.key, slotId }
+    ensureSlotIcon(slotId, preview.iconUrl)
     setSlotEquipmentInfo(characterId, slotId, {
       starForce: preview.stars,
       ...(preview.name.trim() ? { name: preview.name.trim() } : {}),
+      ...detailPayload(preview.details),
     })
     show(`${slotById(slotId).label}に${[preview.name.trim(), `★${preview.stars}`].filter(Boolean).join('、')}を付けました。`)
   }
 
   async function recognizeName(context: CanvasRenderingContext2D, rect: CaptureRect): Promise<string> {
     try {
-      const blob = await cropBlob(context, rect, 4)
+      const blob = await cropBlob(context, rect, 3.5)
       if (!blob) return ''
       const response = await fetch('/api/item-name', {
         method: 'POST',
         headers: { 'content-type': 'image/png' },
         body: blob,
-        signal: AbortSignal.timeout(3000),
+        signal: AbortSignal.timeout(5000),
       })
       if (!response.ok) return ''
       const payload = (await response.json()) as { text?: string }
@@ -477,6 +573,87 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     return image
   }
 
+  async function ensureDisplayVideo(): Promise<HTMLVideoElement | null> {
+    const existing = mediaRef.current
+    if (existing && existing.stream.active && existing.video.videoWidth > 0) {
+      return existing.video
+    }
+    stopDisplayStream()
+    if (!navigator.mediaDevices?.getDisplayMedia) return null
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { cursor: 'always' } as MediaTrackConstraints,
+        audio: false,
+      })
+      const video = document.createElement('video')
+      video.muted = true
+      video.playsInline = true
+      video.srcObject = stream
+      await video.play()
+      const track = stream.getVideoTracks()[0]
+      track?.addEventListener('ended', () => {
+        stopDisplayStream()
+      })
+      mediaRef.current = { stream, video }
+      setHasDisplayStream(true)
+      return video
+    } catch {
+      return null
+    }
+  }
+
+  async function handleBlobFrame(blob: Blob) {
+    haltCapture()
+    setMode(null)
+    const session = sessionRef.current
+    try {
+      const bitmap = await createImageBitmap(blob)
+      const canvas = document.createElement('canvas')
+      canvas.width = bitmap.width
+      canvas.height = bitmap.height
+      const context = canvas.getContext('2d', { willReadFrequently: true })
+      if (!context) {
+        bitmap.close()
+        show('画像を読めませんでした。', true)
+        return
+      }
+      context.drawImage(bitmap, 0, 0)
+      bitmap.close()
+      if (sessionRef.current !== session) return
+      const frame: Frame = {
+        image: context.getImageData(0, 0, canvas.width, canvas.height),
+        context,
+        cursor: null,
+      }
+      const hadWindow = readIcons(frame, true)
+      const hadTooltip = await readInfo(frame)
+      if (!hadWindow && !hadTooltip) {
+        show('画像の中に装備ウィンドウや説明欄が見つかりませんでした。', true)
+      }
+    } catch {
+      show('画像を読めませんでした。', true)
+    }
+  }
+
+  useEffect(() => {
+    const onPaste = (event: ClipboardEvent) => {
+      const items = event.clipboardData?.items
+      if (!items) return
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile()
+          if (file) {
+            event.preventDefault()
+            void handleBlobFrame(file)
+            return
+          }
+        }
+      }
+    }
+    window.addEventListener('paste', onPaste)
+    return () => window.removeEventListener('paste', onPaste)
+  })
+
   function loop(session: number, next: Mode) {
     const canvas = document.createElement('canvas')
     const context = canvas.getContext('2d', { willReadFrequently: true })
@@ -488,18 +665,53 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     let timer = 0
     let stopped = false
     let busy = false
+    let useBrowserCapture = Boolean(mediaRef.current?.stream.active)
     stopRef.current = () => {
       stopped = true
       window.clearInterval(timer)
+    }
+    const pullFromVideo = async (video: HTMLVideoElement) => {
+      if (video.videoWidth === 0 || video.videoHeight === 0) return
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      context.drawImage(video, 0, 0)
+      if (sessionRef.current !== session) return
+      const frame: Frame = {
+        image: context.getImageData(0, 0, canvas.width, canvas.height),
+        context,
+        cursor: null,
+      }
+      if (next === 'icons') readIcons(frame)
+      else await readInfo(frame)
     }
     const pull = async () => {
       if (stopped || busy || sessionRef.current !== session) return
       busy = true
       try {
+        if (useBrowserCapture) {
+          const video = await ensureDisplayVideo()
+          if (sessionRef.current !== session) return
+          if (!video) {
+            stop()
+            show('画面の共有がキャンセルされました。もう一度押して共有する画面を選んでください。', true)
+            return
+          }
+          await pullFromVideo(video)
+          return
+        }
         const response = await fetch('/api/screen-frame', { cache: 'no-store' })
         if (sessionRef.current !== session) return
         if (!response.ok || !(response.headers.get('content-type') ?? '').includes('image/png')) {
-          show('画面を読めませんでした。ゲームを起動して、もう一度押してください。', true)
+          useBrowserCapture = true
+          show('ブラウザから取り込む画面（ウィンドウまたは画面全体）を選んでください。')
+          const video = await ensureDisplayVideo()
+          if (sessionRef.current !== session) return
+          if (!video) {
+            stop()
+            show('画面を読めませんでした。画面共有を選ぶか、スクショをCtrl+Vで貼り付けてください。', true)
+            return
+          }
+          await pullFromVideo(video)
           return
         }
         const x = Number(response.headers.get('X-Cursor-X'))
@@ -521,7 +733,15 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
         else await readInfo(frame)
       } catch {
         if (sessionRef.current === session) {
-          show('画面を読めませんでした。ゲームを手前に出して、もう一度押してください。', true)
+          useBrowserCapture = true
+          const video = await ensureDisplayVideo()
+          if (sessionRef.current !== session) return
+          if (video) {
+            await pullFromVideo(video)
+          } else {
+            stop()
+            show('画面を読めませんでした。画面共有を選ぶか、スクショをCtrl+Vで貼り付けてください。', true)
+          }
         }
       } finally {
         busy = false
@@ -543,6 +763,16 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     loop(session, next)
   }
 
+  async function reselectScreen() {
+    stopDisplayStream()
+    const video = await ensureDisplayVideo()
+    if (!video) {
+      show('画面の選択がキャンセルされました。', true)
+      return
+    }
+    start(mode ?? 'icons')
+  }
+
   const captured = data.items.some((item) => item.id.startsWith(`capture:${characterId}:`))
 
   function clearReadings() {
@@ -557,7 +787,17 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
   }
 
   return (
-    <div className="capture-controls">
+    <div
+      className="capture-controls"
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => {
+        event.preventDefault()
+        const file = event.dataTransfer.files?.[0]
+        if (file && file.type.startsWith('image/')) {
+          void handleBlobFrame(file)
+        }
+      }}
+    >
       <div className="capture-actions">
         <button
           type="button"
@@ -573,9 +813,32 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
         >
           {mode === 'info' ? '装備情報の読み取りを止める' : '装備情報を読む'}
         </button>
+        <button
+          type="button"
+          className="button-quiet"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          スクショ画像を読む
+        </button>
+        {hasDisplayStream ? (
+          <button type="button" className="button-quiet" onClick={() => void reselectScreen()}>
+            画面を選び直す
+          </button>
+        ) : null}
         <button type="button" className="button-quiet" onClick={clearReadings}>
           読み取った装備を外す
         </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={(event) => {
+            const file = event.target.files?.[0]
+            if (file) void handleBlobFrame(file)
+            event.target.value = ''
+          }}
+        />
       </div>
       <p className={failed ? 'capture-note error' : 'capture-note'}>{note}</p>
       {preview ? (

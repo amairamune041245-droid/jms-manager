@@ -70,6 +70,15 @@ export class OcrLines {
         newline = this.buffer.indexOf('\n')
       }
     })
+    child.on('exit', () => {
+      if (this.child === child) {
+        this.child = null
+        this.buffer = ''
+        const waiter = this.pending
+        this.pending = null
+        waiter?.('error process-exited')
+      }
+    })
     this.child = child
     return child
   }

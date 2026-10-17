@@ -12,19 +12,35 @@ const MANUAL = {
     'マイティミョルニル強化': 'マイティートールハンマー',
   },
   bishop: {
+    'ビッグバンVI': 'クァンタムエクスプロージョン',
     'エンジェルオブジェミニ強化': 'エンジェルオブリブラ',
   },
   bowmaster: {
-    '嵐の詩VI': '風の詩',
+    '嵐の詩VI': '暴風の矢',
     'クイバーカートリッジVI': 'クイヴァーカートリッジ',
+    'フラッシュミラージュVI': 'フラッシュミラージュII',
     'クイバーフルバースト強化': 'クイヴァーフルバースト',
   },
+  marksman: {
+    'ピアシングVI': 'ピアシングll',
+    'フリーザーVI': 'フリズベルク',
+    'スプリットアロー強化': { target: 'スピリットアロー', name: 'スプリットアロー' },
+  },
   nightlord: {
+    'マークオブナイトロードVI': 'マークオブナイトロード',
     'スローブラッシング強化': 'スローブラスト',
   },
+  viper: {
+    'シーサーペントバーストVI': 'シーサーペントバーストII',
+    'サーペントアサルトインレイジVI': 'サーペントアサルトインレイジ',
+  },
   aran: {
+    'ファイナルアタックVI': 'アドバンスドファイナルアタック',
     'ブーストエンド-アドレナリンサージ強化': 'ブーストエンド - アドレナリンサージサージ',
     'ブーストエンド-ハンターズターゲティングVI': 'ブーストエンド - ハンターズターゲッティング',
+  },
+  evan: {
+    'サークルオブマナVI': 'サークルオブマナⅣ',
   },
   pathfinder: {
     'エンシェントテンペスト強化': 'レイヴンテンペスト',
@@ -32,24 +48,52 @@ const MANUAL = {
   windbreaker: {
     'トライフリングウィムVI': 'トリフリングウィムIII',
   },
+  mihile: {
+    'ロイヤルガードVI': 'アドバンスドロイヤルガード',
+    'オフェンシブディフェンスVI': 'アドバンスドオフェンシブディフェンス',
+  },
   darkknight: {
     'ビホルダーズリベンジVI': 'ダークスピリットリベンジ',
     'ビホルダーショックVI': 'ダークスピリットショック',
     'ダークスフィア強化': 'ダークスピア',
     'ビホルダーインパクト強化': 'ダークスピリットインパクト',
   },
+  demonslayer: {
+    'デーモンスラッシュVI': 'デーモンスラッシュ最終強化',
+    'サーバラスVI': 'ケルベロス',
+  },
   demonavenger: {
     'エクシード：エクスキューションVI': 'エクシード：エグゼキューション',
     'レヴナント強化': 'レバナント',
   },
+  wildhunter: {
+    'ファイナルアタックVI': 'アドバンスドファイナルアタック',
+  },
+  angelicbuster: {
+    'ソウルトレイスVI': 'ソウルトレイス',
+  },
+  cadena: {
+    'ウェポンバラエティVI': 'ウェポンバラエティーⅢ',
+  },
   kain: {
+    'ストライクアローVI': 'ストライクアローIII',
+    'デスブレッシングVI': 'アドバンスドデスブレシング',
     'ドラゴンバースト強化': '[発現] ドラゴンバースト',
     'フェイタルブリッツ強化': '[処刑] フェイタルブリッツ',
   },
+  illium: {
+    'クラフト：ジャベリンVI': 'クラフト：ジャベリンⅡ',
+    'リアクション：ドミネーションVI': 'リアクション：ドミネーションⅡ',
+  },
   hayato: {
-    '［迅速］沈没の満潮強化': '[迅速] 沈む満潮',
-    '［迅速］疾走の閃光強化': '[迅速] 駆ける閃光',
-    '［抜刀］哀号の天光強化': '[抜刀] 轟く天光',
+    '[迅速] 霞斬りVI': '[迅速] 霞斬り',
+    '[迅速] 三日月斬りVI': '[迅速] 三日月斬り',
+    '[抜刀] 新月斬りVI': '[抜刀] 新月斬り',
+    '[抜刀] 満月ノ咆哮VI': '[抜刀] 満月ノ咆哮',
+    '初月ノ型強化': '初月ノ型',
+    '[迅速] 沈む満潮強化': '[迅速] 沈む満潮',
+    '[迅速] 駆ける閃光強化': '[迅速] 駆ける閃光',
+    '[抜刀] 轟く天光強化': '[抜刀] 轟く天光',
   },
   len: {
     '梅花剣本初：先斬VI': '梅花剣・本招：旋斬',
@@ -57,23 +101,30 @@ const MANUAL = {
     '梅花剣二招式：砕梅VI': '梅花剣・弐招：砕梅',
   },
   kanna: {
-    '［精霊］百面金毛十尾狐強化': '[魂令] 白面金毛の十尾',
-    '［精霊］部分解放：燃炎光刃強化': '[魂令] 限定解放：焚炎狂殺',
-    '［精霊］部分解放：黒翼破天強化': '[魂令] 限定解放：黒翼破天',
-    '［精霊］部分解放：絶魂毒牙強化': '[魂令] 限定解放：絶魂毒牙',
-    '召喚：鬼VI': '召喚：オニ',
-    '召喚：大蛇VI': '召喚：オロチ',
-    '破魂符：武VI': '破魂符 -舞-',
+    '[魂令] 白面金毛の十尾強化': '[魂令] 白面金毛の十尾',
+    '[魂令] 限定解放：焚炎狂殺強化': '[魂令] 限定解放：焚炎狂殺',
+    '[魂令] 限定解放：黒翼破天強化': '[魂令] 限定解放：黒翼破天',
+    '[魂令] 限定解放：絶魂毒牙強化': '[魂令] 限定解放：絶魂毒牙',
+    '召喚：オニVI': '召喚：オニ',
+    '召喚：テングVI': '召喚：テング',
+    '召喚：オロチVI': '召喚：オロチ',
+    '破魂符 -舞-VI': '破魂符 -舞-',
   },
   mercedes: {
+    'ストライクデュアルショットVI': 'アドバンスドストライクデュアルショット',
     'シルフィディア強化': 'シルピディア',
     'イルカラの息吹強化': 'イルカルラの息吹',
     'ファイナルアタックVI': 'アドバンスドファイナルアタック',
   },
   shade: {
-    '喚魂妖狐陣強化': '還魂妖狐陣',
+    '狐霊VI': '狐霊',
+    '龍脈拳VI': '龍脈拳',
+    '蒐召魂VI': '蒐召魂',
+    '還魂妖狐陣強化': '還魂妖狐陣',
   },
   ark: {
+    '抑えられない憎悪VI': '抑えられない憎悪',
+    '終わらない悪夢VI': '終わらない悪夢',
     '漏れ出す悪夢強化': 'にじみ出る悪夢',
     '永遠に飢える獣強化': '永遠に飢え続ける獣',
   },
@@ -83,6 +134,7 @@ const MANUAL = {
     '湧き上がる精気強化': 'ほとばしる精気',
     '山稜うねうね強化': 'そびえ立つ山',
     '精気まきVI': '精気撒布',
+    '目覚めVI': '眠り覚まし',
   },
   striker: {
     '神雷合一強化': '身雷合一',
@@ -92,6 +144,10 @@ const MANUAL = {
     '拳術：山霊召喚強化': '巻術：山霊召喚',
   },
   luminous: {
+    'トワイライトノヴァVI': {
+      name: 'トワイライトノヴァ',
+      icon: 'https://media.maplestorywiki.net/yetidb/Skill_HEXA_Twilight_Nova_(Equilibrium).png',
+    },
     'パニッシングリゾネーター強化': 'パニシングレゾネータ',
   },
   battlemage: {
@@ -106,6 +162,7 @@ const MANUAL = {
   },
   xenon: {
     'パージロップマスカレードVI：狙撃': 'ファジーロップマスカレード：狙撃',
+    'ロケットシステムVI': 'ピンポイントロケット最終強化',
   },
 }
 
@@ -115,7 +172,7 @@ function norm(value) {
     .replace(/\s+/g, '')
     .replace(/強化$/, '')
     .replace(/(?:Ⅵ|VI)+$/gi, '')
-    .replace(/[・:：\-‐−/／\[\]［］()（）|｜]/g, '')
+    .replace(/[・:：\-‐−/／[\]［］()（）|｜]/g, '')
     .replace(/[ァィゥェォッャュョ]/g, (char) => String.fromCharCode(char.charCodeAt(0) + 1))
     .replace(/ヴ/g, 'ブ')
     .replace(/ー/g, '')
@@ -213,13 +270,19 @@ for (const job of JOBS) {
   for (const draft of namuDraftsFor(job.id)) {
     if (draft.role !== 'mastery' && draft.role !== 'enhance') continue
     if (draft.shared) continue
-    const manualName = MANUAL[job.id]?.[draft.name]
-    const skill = manualName ? findByName(job.id, manualName) : autoMatch(job.id, draft.name)
-    if (!skill) {
-      unmatched.push(`${job.id}\t${draft.role}\t${draft.name}${manualName ? `\tMANUAL MISS ${manualName}` : ''}`)
+    const manual = MANUAL[job.id]?.[draft.name]
+    if (manual && typeof manual === 'object' && manual.icon) {
+      jobRenames[draft.name] = { name: manual.name, icon: manual.icon }
       continue
     }
-    jobRenames[draft.name] = { name: skill.name, icon: skill.icon }
+    const manualTarget = typeof manual === 'string' ? manual : manual?.target
+    const skill = manualTarget ? findByName(job.id, manualTarget) : autoMatch(job.id, draft.name)
+    if (!skill) {
+      unmatched.push(`${job.id}\t${draft.role}\t${draft.name}${manualTarget ? `\tMANUAL MISS ${manualTarget}` : ''}`)
+      continue
+    }
+    const finalName = typeof manual === 'object' && manual?.name ? manual.name : skill.name
+    jobRenames[draft.name] = { name: finalName, icon: skill.icon }
   }
   renames[job.id] = jobRenames
 }

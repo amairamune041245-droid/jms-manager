@@ -1008,6 +1008,10 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "name": "エンジェルレイ",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/bishop/icn_bishop_034.png"
     },
+    "ビッグバンVI": {
+      "name": "クァンタムエクスプロージョン",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/bishop/icn_bishop_036.png"
+    },
     "エンジェリックタッチVI": {
       "name": "エンジェリックタッチ",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/bishop/icn_bishop_014.png"
@@ -1035,8 +1039,8 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
   },
   "bowmaster": {
     "嵐の詩VI": {
-      "name": "風の詩",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/bowmaster/icn_bowmaster_009.png"
+      "name": "暴風の矢",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/bowmaster/icn_bowmaster_026.png"
     },
     "アロープラターVI": {
       "name": "アロープラッター",
@@ -1047,8 +1051,8 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/bowmaster/icn_bowmaster_011.png"
     },
     "フラッシュミラージュVI": {
-      "name": "フラッシュミラージュ",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/bowmaster/icn_bowmaster_018.png"
+      "name": "フラッシュミラージュII",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/bowmaster/icn_bowmaster_028.png"
     },
     "アローレイン強化": {
       "name": "アローレイン",
@@ -1073,8 +1077,12 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/crossbowmaster/icn_crossbowmaster_027.png"
     },
     "ピアシングVI": {
-      "name": "ピアシング",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/crossbowmaster/icn_crossbowmaster_009.png"
+      "name": "ピアシングll",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/crossbowmaster/icn_crossbowmaster_026.png"
+    },
+    "フリーザーVI": {
+      "name": "フリズベルク",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/crossbowmaster/icn_crossbowmaster_017.png"
     },
     "ファイナルアタックVI": {
       "name": "ファイナルアタック",
@@ -1085,7 +1093,7 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/crossbowmaster/icn_crossbowmaster_052.png"
     },
     "スプリットアロー強化": {
-      "name": "スピリットアロー",
+      "name": "スプリットアロー",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/crossbowmaster/icn_crossbowmaster_049.png"
     },
     "チャージドアロー強化": {
@@ -1136,9 +1144,9 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "name": "クアドルプルスロー",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/nightload/icn_nightload_029.png"
     },
-    "マークオブアサシンVI": {
-      "name": "マークオブアサシン",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/nightload/icn_nightload_013.png"
+    "マークオブナイトロードVI": {
+      "name": "マークオブナイトロード",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/nightload/icn_nightload_031.png"
     },
     "ショーダウンチャレンジVI": {
       "name": "ショーダウンチャレンジ",
@@ -1238,13 +1246,13 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "name": "フィストインレイジ",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/viper/icn_viper_033.png"
     },
-    "シーサーペントVI": {
-      "name": "シーサーペント",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/viper/icn_viper_015.png"
+    "シーサーペントバーストVI": {
+      "name": "シーサーペントバーストII",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/viper/icn_viper_036.png"
     },
-    "サーペントストーンVI": {
-      "name": "サーペントストーン",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/viper/icn_viper_028.png"
+    "サーペントアサルトインレイジVI": {
+      "name": "サーペントアサルトインレイジ",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/adventurer/viper/icn_viper_038.png"
     },
     "フックボンバーVI": {
       "name": "フックボンバー",
@@ -1511,16 +1519,16 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/cygnus/mikhail/icn_mikhail_026.png"
     },
     "ロイヤルガードVI": {
-      "name": "ロイヤルガード",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/cygnus/mikhail/icn_mikhail_005.png"
+      "name": "アドバンスドロイヤルガード",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/cygnus/mikhail/icn_mikhail_021.png"
     },
     "デッドリーチャージVI": {
       "name": "デッドリーチャージ",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/cygnus/mikhail/icn_mikhail_045.png"
     },
     "オフェンシブディフェンスVI": {
-      "name": "オフェンシブディフェンス",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/cygnus/mikhail/icn_mikhail_025.png"
+      "name": "アドバンスドオフェンシブディフェンス",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/cygnus/mikhail/icn_mikhail_030.png"
     },
     "ロー・アイアス強化": {
       "name": "ローアイアース",
@@ -1553,8 +1561,8 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/aran/icn_aran_053.png"
     },
     "ファイナルアタックVI": {
-      "name": "ファイナルアタック",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/aran/icn_aran_020.png"
+      "name": "アドバンスドファイナルアタック",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/aran/icn_aran_041.png"
     },
     "ブーストエンド-アドレナリンサージ強化": {
       "name": "ブーストエンド - アドレナリンサージサージ",
@@ -1575,8 +1583,8 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
   },
   "evan": {
     "サークルオブマナVI": {
-      "name": "サークルオブマナⅠ",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/evan/icn_evan_005.png"
+      "name": "サークルオブマナⅣ",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/evan/icn_evan_035.png"
     },
     "ドラゴンスウィフトVI": {
       "name": "ドラゴンスイフト",
@@ -1617,8 +1625,8 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/mercedes/icn_mercedes_017.png"
     },
     "ストライクデュアルショットVI": {
-      "name": "ストライクデュアルショット",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/mercedes/icn_mercedes_016.png"
+      "name": "アドバンスドストライクデュアルショット",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/mercedes/icn_mercedes_030.png"
     },
     "ファイナルアタックVI": {
       "name": "アドバンスドファイナルアタック",
@@ -1688,6 +1696,10 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "name": "アポカリプス",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/luminous/icn_luminous_032.png"
     },
+    "トワイライトノヴァVI": {
+      "name": "トワイライトノヴァ",
+      "icon": "https://media.maplestorywiki.net/yetidb/Skill_HEXA_Twilight_Nova_(Equilibrium).png"
+    },
     "真理の扉強化": {
       "name": "真理の扉",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/luminous/icn_luminous_052.png"
@@ -1710,11 +1722,19 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "name": "鬼斬",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/yue/icn_yue_025.png"
     },
-    "妖狐霊VI": {
+    "狐霊VI": {
       "name": "狐霊",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/yue/icn_yue_014.png"
     },
-    "喚魂妖狐陣強化": {
+    "龍脈拳VI": {
+      "name": "龍脈拳",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/yue/icn_yue_024.png"
+    },
+    "蒐召魂VI": {
+      "name": "蒐召魂",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/yue/icn_yue_018.png"
+    },
+    "還魂妖狐陣強化": {
       "name": "還魂妖狐陣",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/hero/yue/icn_yue_053.png"
     },
@@ -1813,8 +1833,8 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/resistance/wildhunter/icn_wildhunter_099.png"
     },
     "ファイナルアタックVI": {
-      "name": "ファイナルアタック",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/resistance/wildhunter/icn_wildhunter_018.png"
+      "name": "アドバンスドファイナルアタック",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/resistance/wildhunter/icn_wildhunter_038.png"
     },
     "コマンド：プレデターズアイ強化": {
       "name": "コマンド：プレデターズアイ",
@@ -1873,12 +1893,16 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/resistance/demonslayer/icn_demonslayer_029.png"
     },
     "デーモンスラッシュVI": {
-      "name": "デーモンスラッシュ",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/resistance/demonslayer/icn_demonslayer_004.png"
+      "name": "デーモンスラッシュ最終強化",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/resistance/demonslayer/icn_demonslayer_027.png"
     },
     "メタモルフォシスVI": {
       "name": "メタモルフォシス",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/resistance/demonslayer/icn_demonslayer_032.png"
+    },
+    "サーバラスVI": {
+      "name": "ケルベロス",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/resistance/demonslayer/icn_demonslayer_048.png"
     },
     "デーモンアウェイクニング強化": {
       "name": "デーモンアウェイクニング",
@@ -1940,6 +1964,10 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "name": "トライアングルフォーメーション",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/resistance/xenon/icn_xenon_032.png"
     },
+    "ロケットシステムVI": {
+      "name": "ピンポイントロケット最終強化",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/resistance/xenon/icn_xenon_052.png"
+    },
     "ブレードダンシングVI": {
       "name": "ブレードダンシング",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/resistance/xenon/icn_xenon_037.png"
@@ -2000,6 +2028,10 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "name": "トリニティ",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/nova/angelicbuster/icn_angelicbuster_025.png"
     },
+    "ソウルトレイスVI": {
+      "name": "ソウルトレイス",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/nova/angelicbuster/icn_angelicbuster_017.png"
+    },
     "スーパーノヴァVI": {
       "name": "スーパーノヴァ",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/nova/angelicbuster/icn_angelicbuster_043.png"
@@ -2031,8 +2063,8 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/nova/cadena/icn_cadena_005.png"
     },
     "ウェポンバラエティVI": {
-      "name": "ウェポンバラエティーⅠ",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/nova/cadena/icn_cadena_014.png"
+      "name": "ウェポンバラエティーⅢ",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/nova/cadena/icn_cadena_033.png"
     },
     "サモンビーティングニードルバットVI": {
       "name": "サモンビーティングニードルバット",
@@ -2065,16 +2097,16 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/nova/kain/icn_kain_029.png"
     },
     "ストライクアローVI": {
-      "name": "ストライクアロー",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/nova/kain/icn_kain_003.png"
+      "name": "ストライクアローIII",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/nova/kain/icn_kain_018.png"
     },
     "シャフトブレイクVI": {
       "name": "シャフトブレイク",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/nova/kain/icn_kain_020.png"
     },
     "デスブレッシングVI": {
-      "name": "デスブレシング",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/nova/kain/icn_kain_019.png"
+      "name": "アドバンスドデスブレシング",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/nova/kain/icn_kain_028.png"
     },
     "ドラゴンバースト強化": {
       "name": "[発現] ドラゴンバースト",
@@ -2095,12 +2127,12 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
   },
   "illium": {
     "クラフト：ジャベリンVI": {
-      "name": "クラフト：ジャベリン",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/lef/illium/icn_illium_004.png"
+      "name": "クラフト：ジャベリンⅡ",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/lef/illium/icn_illium_031.png"
     },
     "リアクション：ドミネーションVI": {
-      "name": "リアクション：ドミネーション",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/lef/illium/icn_illium_013.png"
+      "name": "リアクション：ドミネーションⅡ",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/lef/illium/icn_illium_021.png"
     },
     "リオVI": {
       "name": "リーヨ",
@@ -2136,9 +2168,13 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
       "name": "消えない傷",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/lef/ark/icn_ark_014.png"
     },
-    "忘れられない悪夢VI": {
-      "name": "忘れられない悪夢",
-      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/lef/ark/icn_ark_005.png"
+    "抑えられない憎悪VI": {
+      "name": "抑えられない憎悪",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/lef/ark/icn_ark_027.png"
+    },
+    "終わらない悪夢VI": {
+      "name": "終わらない悪夢",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/lef/ark/icn_ark_031.png"
     },
     "根源の記憶強化": {
       "name": "根源の記憶",
@@ -2226,49 +2262,69 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
     }
   },
   "hayato": {
-    "［抜刀］満月の咆哮VI": {
+    "[迅速] 霞斬りVI": {
+      "name": "[迅速] 霞斬り",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/hayato/icn_hayato_004.png"
+    },
+    "[迅速] 三日月斬りVI": {
+      "name": "[迅速] 三日月斬り",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/hayato/icn_hayato_020.png"
+    },
+    "[抜刀] 新月斬りVI": {
+      "name": "[抜刀] 新月斬り",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/hayato/icn_hayato_019.png"
+    },
+    "[抜刀] 満月ノ咆哮VI": {
       "name": "[抜刀] 満月ノ咆哮",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/hayato/icn_hayato_031.png"
     },
-    "［迅速］沈没の満潮強化": {
+    "初月ノ型強化": {
+      "name": "初月ノ型",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/hayato/icn_hayato_051.png"
+    },
+    "[迅速] 沈む満潮強化": {
       "name": "[迅速] 沈む満潮",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/hayato/icn_hayato_052.png"
     },
-    "［迅速］疾走の閃光強化": {
+    "[迅速] 駆ける閃光強化": {
       "name": "[迅速] 駆ける閃光",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/hayato/icn_hayato_053.png"
     },
-    "［抜刀］哀号の天光強化": {
+    "[抜刀] 轟く天光強化": {
       "name": "[抜刀] 轟く天光",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/hayato/icn_hayato_054.png"
     }
   },
   "kanna": {
-    "破魂符：武VI": {
+    "破魂符 -舞-VI": {
       "name": "破魂符 -舞-",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/kanna/icn_kanna_029.png"
     },
-    "召喚：鬼VI": {
+    "召喚：オニVI": {
       "name": "召喚：オニ",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/kanna/icn_kanna_009.png"
     },
-    "召喚：大蛇VI": {
+    "召喚：テングVI": {
+      "name": "召喚：テング",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/kanna/icn_kanna_021.png"
+    },
+    "召喚：オロチVI": {
       "name": "召喚：オロチ",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/kanna/icn_kanna_032.png"
     },
-    "［精霊］百面金毛十尾狐強化": {
+    "[魂令] 白面金毛の十尾強化": {
       "name": "[魂令] 白面金毛の十尾",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/kanna/icn_kanna_057.png"
     },
-    "［精霊］部分解放：燃炎光刃強化": {
+    "[魂令] 限定解放：焚炎狂殺強化": {
       "name": "[魂令] 限定解放：焚炎狂殺",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/kanna/icn_kanna_058.png"
     },
-    "［精霊］部分解放：黒翼破天強化": {
+    "[魂令] 限定解放：黒翼破天強化": {
       "name": "[魂令] 限定解放：黒翼破天",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/kanna/icn_kanna_059.png"
     },
-    "［精霊］部分解放：絶魂毒牙強化": {
+    "[魂令] 限定解放：絶魂毒牙強化": {
       "name": "[魂令] 限定解放：絶魂毒牙",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/akatsukinojin/kanna/icn_kanna_060.png"
     }
@@ -2319,6 +2375,10 @@ export const CORE_RENAMES: Record<string, Record<string, { name: string; icon: s
     "龍脈吸収VI": {
       "name": "龍脈吸収",
       "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/anima/lara/icn_lara_028.png"
+    },
+    "目覚めVI": {
+      "name": "眠り覚まし",
+      "icon": "https://static.nexon.co.jp/maplestory/ver2017/job/anima/lara/icn_lara_023.png"
     },
     "大きな伸び強化": {
       "name": "のびのび",

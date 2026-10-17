@@ -185,7 +185,7 @@ function sheetPanels(image: CaptureImage): CaptureRect[] {
   return blobs
     .filter((blob) => {
       const ratio = blob.w / blob.h
-      return blob.w > 90 && blob.h > 90 && ratio > 0.55 && ratio < 1.8
+      return blob.w > 90 && blob.h > 90 && ratio > 0.35 && ratio < 2.8
     })
     .map((blob) => ({ x: blob.x, y: blob.y, w: blob.w, h: blob.h }))
 }
@@ -196,9 +196,10 @@ function slotBlobs(image: CaptureImage, panel: CaptureRect): Blob[] {
     (index) => !isSheetPixel(image.data[index] ?? 0, image.data[index + 1] ?? 0, image.data[index + 2] ?? 0),
     panel,
   )
+  const maxSlotWidth = Math.min(panel.w * 0.28, 120)
   const square = blobs.filter((blob) => {
     const ratio = blob.w / blob.h
-    return ratio > 0.72 && ratio < 1.4 && blob.w < panel.w * 0.28
+    return ratio > 0.72 && ratio < 1.4 && blob.w >= 16 && blob.w < maxSlotWidth
   })
   if (square.length < 8) return []
   const size = median(square.map((blob) => blob.w))
@@ -294,32 +295,44 @@ function fitPanel(image: CaptureImage, blobs: Blob[]): EquipmentWindowReading | 
     list.push(blob)
     rows.set(bucket, list)
   }
-  const weapon = [...rows.values()].sort((a, b) => b.length - a.length)[0]
-  if (!weapon || weapon.length < 6) return null
-  const pitch = pitchOf(weapon)
-  if (pitch < size * 1.01 || pitch > size * 1.4) return null
-  const byX = [...weapon].sort((a, b) => a.cx - b.cx)
-  const columns: number[] = []
-  for (const blob of byX) {
-    const expected = columns.length === 0 ? blob.cx : (columns[0] ?? blob.cx) + columns.length * pitch
-    if (blob.cx - expected > pitch * 0.55) columns.push(expected)
-    columns.push(blob.cx)
+  const candidateRows = [...rows.values()].filter((row) => row.length >= 6).sort((a, b) => b.length - a.length)
+  let bestReading: EquipmentWindowReading | null = null
+  let bestMatched = 0
+  for (const weapon of candidateRows) {
+    const byX = [...weapon].sort((a, b) => a.cx - b.cx)
+    for (let startIdx = 0; startIdx <= byX.length - 6; startIdx += 1) {
+      const slice = byX.slice(startIdx, startIdx + 7)
+      const pitch = pitchOf(slice)
+      if (pitch < size * 1.01 || pitch > size * 1.4) continue
+      const columns: number[] = []
+      for (const blob of byX.slice(startIdx)) {
+        const expected = columns.length === 0 ? blob.cx : (columns[0] ?? blob.cx) + columns.length * pitch
+        if (blob.cx - expected > pitch * 0.55) columns.push(expected)
+        columns.push(blob.cx)
+        if (columns.length >= 7) break
+      }
+      while (columns.length < 7) {
+        const last = columns[columns.length - 1]
+        if (last === undefined) break
+        columns.push(last + pitch)
+      }
+      if (columns.length < 7 || columns[0] === undefined) continue
+      const grid: WindowGrid = {
+        originX: columns[0] - size / 2,
+        originY: median(slice.map((blob) => blob.cy)) - size / 2 - WEAPON_ROW * pitch,
+        pitch,
+        size,
+      }
+      const described = describeSlots(image, grid, blobs)
+      if (!described) continue
+      const matched = described.slots.filter((slot) => slot.state === 'filled').length
+      if (matched > bestMatched) {
+        bestMatched = matched
+        bestReading = { grid, ...described, presetIndex: readPresetIndex(image, grid) }
+      }
+    }
   }
-  while (columns.length < 7) {
-    const last = columns[columns.length - 1]
-    if (last === undefined) break
-    columns.push(last + pitch)
-  }
-  if (columns.length < 7 || columns[0] === undefined) return null
-  const grid: WindowGrid = {
-    originX: columns[0] - size / 2,
-    originY: median(weapon.map((blob) => blob.cy)) - size / 2 - WEAPON_ROW * pitch,
-    pitch,
-    size,
-  }
-  const described = describeSlots(image, grid, blobs)
-  if (!described) return null
-  return { grid, ...described, presetIndex: readPresetIndex(image, grid) }
+  return bestReading
 }
 
 function describeSlots(
@@ -941,8 +954,13 @@ function isNameInk(r: number, g: number, b: number): boolean {
   return (r + g + b) / 3 > 168 && max - min < 55 && b > 120
 }
 
-/** 星の下、アイコンの上にある白いアイテム名。 */
-function readTooltipNameRect(image: CaptureImage, cluster: StarCluster, icon: CaptureRect): CaptureRect | null {
+function locateNameBand(
+  image: CaptureImage,
+  cluster: StarCluster,
+  icon: CaptureRect,
+  inkTest: (r: number, g: number, b: number) => boolean,
+  maxGap: number,
+): CaptureRect | null {
   const y1 = cluster.y + cluster.h + 2
   const y2 = Math.min(image.height - 1, icon.y - 1)
   const x1 = Math.max(0, Math.min(cluster.x, icon.x) - 8)
@@ -952,7 +970,7 @@ function readTooltipNameRect(image: CaptureImage, cluster: StarCluster, icon: Ca
   for (let y = y1; y <= y2; y += 1) {
     let count = 0
     for (let x = x1; x <= x2; x += 1) {
-      if (isNameInk(...rgbAt(image, x, y))) count += 1
+      if (inkTest(...rgbAt(image, x, y))) count += 1
     }
     if (count >= 8) rows.push(y)
   }
@@ -960,13 +978,13 @@ function readTooltipNameRect(image: CaptureImage, cluster: StarCluster, icon: Ca
   if (first === undefined) return null
   let end = first
   for (const y of rows) {
-    if (y <= end + 2) end = y
+    if (y <= end + maxGap && y - first <= 15) end = y
     else break
   }
   const inkX: number[] = []
   for (let y = first; y <= end; y += 1) {
     for (let x = x1; x <= x2; x += 1) {
-      if (isNameInk(...rgbAt(image, x, y))) inkX.push(x)
+      if (inkTest(...rgbAt(image, x, y))) inkX.push(x)
     }
   }
   inkX.sort((a, b) => a - b)
@@ -987,6 +1005,14 @@ function readTooltipNameRect(image: CaptureImage, cluster: StarCluster, icon: Ca
     w: Math.min(image.width - left, right - left + 7),
     h: end - first + 6,
   }
+}
+
+/** 星の下、アイコンの上にあるアイテム名（白文字または強化色文字）。 */
+function readTooltipNameRect(image: CaptureImage, cluster: StarCluster, icon: CaptureRect): CaptureRect | null {
+  return (
+    locateNameBand(image, cluster, icon, isNameInk, 2) ??
+    locateNameBand(image, cluster, icon, isTooltipInk, 1)
+  )
 }
 
 function locateStarCluster(

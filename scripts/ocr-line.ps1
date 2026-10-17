@@ -28,21 +28,27 @@ if (-not $engine) {
 
 function Read-ImageText {
   if (-not $engine) { return '' }
-  $file = Await-WinRt ([Windows.Storage.StorageFile]::GetFileFromPathAsync($ImagePath)) ([Windows.Storage.StorageFile])
-  $stream = Await-WinRt ($file.OpenAsync([Windows.Storage.FileAccessMode]::Read)) ([Windows.Storage.Streams.IRandomAccessStream])
+  $bytes = [System.IO.File]::ReadAllBytes($ImagePath)
+  $mem = New-Object System.IO.MemoryStream (,$bytes)
+  $stream = [System.IO.WindowsRuntimeStreamExtensions]::AsRandomAccessStream($mem)
   try {
     $decoder = Await-WinRt ([Windows.Graphics.Imaging.BitmapDecoder]::CreateAsync($stream)) ([Windows.Graphics.Imaging.BitmapDecoder])
     $bitmap = Await-WinRt ($decoder.GetSoftwareBitmapAsync()) ([Windows.Graphics.Imaging.SoftwareBitmap])
-    $result = Await-WinRt ($engine.RecognizeAsync($bitmap)) ([Windows.Media.Ocr.OcrResult])
-    $parts = New-Object System.Collections.Generic.List[string]
-    foreach ($ocrLine in $result.Lines) {
-      $piece = ([string]$ocrLine.Text).Trim()
-      if ($piece.Length -gt 0) { $parts.Add($piece) }
+    try {
+      $result = Await-WinRt ($engine.RecognizeAsync($bitmap)) ([Windows.Media.Ocr.OcrResult])
+      $parts = New-Object System.Collections.Generic.List[string]
+      foreach ($ocrLine in $result.Lines) {
+        $piece = ([string]$ocrLine.Text).Trim()
+        if ($piece.Length -gt 0) { $parts.Add($piece) }
+      }
+      if ($parts.Count -eq 0) { return ([string]$result.Text).Trim() }
+      return ($parts -join "`n")
+    } finally {
+      $bitmap.Dispose()
     }
-    if ($parts.Count -eq 0) { return ([string]$result.Text).Trim() }
-    return ($parts -join "`n")
   } finally {
     $stream.Dispose()
+    $mem.Dispose()
   }
 }
 
