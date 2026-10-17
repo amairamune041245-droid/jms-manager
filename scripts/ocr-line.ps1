@@ -37,7 +37,9 @@ function Read-ImageText {
     try {
       $result = Await-WinRt ($engine.RecognizeAsync($bitmap)) ([Windows.Media.Ocr.OcrResult])
       $parts = New-Object System.Collections.Generic.List[string]
-      foreach ($ocrLine in $result.Lines) {
+      # OCRの列検出順では潜在の見出しが能力値より後ろになることがある。
+      # 画面上の上から下の順に戻してからパーサーへ渡す。
+      foreach ($ocrLine in ($result.Lines | Sort-Object { ($_.Words | ForEach-Object { $_.BoundingRect.Y } | Measure-Object -Minimum).Minimum })) {
         $piece = ([string]$ocrLine.Text).Trim()
         if ($piece.Length -gt 0) { $parts.Add($piece) }
       }

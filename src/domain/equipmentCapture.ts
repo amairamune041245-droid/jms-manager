@@ -190,10 +190,10 @@ function sheetPanels(image: CaptureImage): CaptureRect[] {
     .map((blob) => ({ x: blob.x, y: blob.y, w: blob.w, h: blob.h }))
 }
 
-function slotBlobs(image: CaptureImage, panel: CaptureRect): Blob[] {
+function slotBlobs(image: CaptureImage, panel: CaptureRect, gray = false): Blob[] {
   const blobs = componentBlobs(
     image,
-    (index) => !isSheetPixel(image.data[index] ?? 0, image.data[index + 1] ?? 0, image.data[index + 2] ?? 0),
+    (index) => !(gray ? isGraySheetPixel : isSheetPixel)(image.data[index] ?? 0, image.data[index + 1] ?? 0, image.data[index + 2] ?? 0),
     panel,
   )
   const maxSlotWidth = Math.min(panel.w * 0.28, 120)
@@ -548,19 +548,24 @@ function graySheetRatio(image: CaptureImage, rect: CaptureRect): number {
   return total === 0 ? 0 : sheet / total
 }
 
-function scoreGrayGrid(image: CaptureImage, grid: WindowGrid): number {
-  let score = 0
-  for (const { rect } of slotRectsFor(grid)) {
-    if (rect.x < 0 || rect.y < 0 || rect.x + rect.w > image.width || rect.y + rect.h > image.height) return -1
-    const inner = {
-      x: rect.x + 4,
-      y: rect.y + 4,
-      w: Math.max(1, rect.w - 8),
-      h: Math.max(1, rect.h - 8),
+function frameScore(image: CaptureImage, rect: CaptureRect): number {
+  let hits = 0
+  let total = 0
+  for (let t = 5; t < rect.w - 5; t += 3) {
+    for (const [x, y, ox, oy] of [
+      [rect.x + t, rect.y, rect.x + t, rect.y - 2],
+      [rect.x + t, rect.y + rect.h - 1, rect.x + t, rect.y + rect.h + 1],
+      [rect.x, rect.y + t, rect.x - 2, rect.y + t],
+      [rect.x + rect.w - 1, rect.y + t, rect.x + rect.w + 1, rect.y + t],
+    ]) {
+      if (x === undefined || y === undefined || ox === undefined || oy === undefined) continue
+      total += 1
+      const inside = rgbAt(image, x, y)
+      const outside = rgbAt(image, ox, oy)
+      if (isGraySheetPixel(...outside) && inside.some((v, i) => Math.abs(v - (outside[i] ?? v)) > 25)) hits += 1
     }
-    if (inkRatio(image, inner) > 0.18) score += 1
   }
-  return score
+  return total ? hits / total : 0
 }
 
 function describeGraySlots(
@@ -577,7 +582,7 @@ function describeGraySlots(
       h: Math.max(1, rect.h - 8),
     }
     let state: SlotState = 'hidden'
-    if (inkRatio(image, inner) > 0.18) state = 'filled'
+    if (frameScore(image, rect) > 0.2 && inkRatio(image, inner) > 0.18) state = 'filled'
     else if (graySheetRatio(image, rect) > 0.55) state = 'empty'
     if (state === 'filled') matched += 1
     slots.push({ id, ...rect, state })
@@ -593,25 +598,32 @@ function describeGraySlots(
 }
 
 function fitGrayPanel(image: CaptureImage, panel: CaptureRect): EquipmentWindowReading | null {
+  const framed = fitPanel(image, slotBlobs(image, panel, true))
+  if (framed) return framed
   let best: { grid: WindowGrid; score: number } | null = null
-  for (let size = 26; size <= 46; size += 2) {
-    for (let extra = 4; extra <= 16; extra += 2) {
-      const pitch = size + extra
-      const spanW = pitch * 6 + size
-      const spanH = pitch * 5 + size
-      if (spanW > panel.w + 12 || spanH > panel.h + 12) continue
-      const maxX = panel.x + panel.w - spanW
-      const maxY = panel.y + panel.h - spanH
-      for (let originX = panel.x - 6; originX <= maxX; originX += 3) {
-        for (let originY = panel.y - 6; originY <= maxY; originY += 3) {
-          const grid = { originX, originY, pitch, size }
-          const score = scoreGrayGrid(image, grid)
-          if (!best || score > best.score) best = { grid, score }
+  // 背景以外の画素数だけではキャラクター絵まで装備枠として数えてしまう。
+  // 独立した正方形の枠からサイズと間隔の候補を作り、実際の枠線を照合する。
+  const squares = componentBlobs(image, (i) => !isGraySheetPixel(
+    image.data[i] ?? 0, image.data[i + 1] ?? 0, image.data[i + 2] ?? 0,
+  ), panel).filter((b) => b.w >= 26 && b.w <= 60 && Math.abs(b.w - b.h) <= 3)
+  for (const square of squares) {
+    for (let size = square.w - 2; size <= square.w + 1; size += 1) {
+      for (let extra = 1; extra <= 6; extra += 0.25) {
+        const pitch = size + extra
+        for (let column = 0; column < 7; column += 1) {
+          for (let row = 0; row < 6; row += 1) {
+            const grid = { originX: square.x - column * pitch, originY: square.y - row * pitch, pitch, size }
+            if (grid.originX < panel.x || grid.originY < panel.y ||
+                grid.originX + 6 * pitch + size > panel.x + panel.w + 2 ||
+                grid.originY + 5 * pitch + size > panel.y + panel.h + 2) continue
+            const score = slotRectsFor(grid).reduce((sum, { rect }) => sum + frameScore(image, rect), 0)
+            if (!best || score > best.score) best = { grid, score }
+          }
         }
       }
     }
   }
-  if (!best || best.score < 14) return null
+  if (!best || best.score < 6) return null
   const described = describeGraySlots(image, best.grid)
   if (!described) return null
   return { grid: best.grid, ...described, presetIndex: readPresetIndex(image, best.grid) }
@@ -830,7 +842,29 @@ export function readHoveredTooltip(
     if (found) return found
   }
   const cluster = locateStarCluster(image, 36, onScreen ? near : undefined)
-  return cluster ? tooltipAt(image, cluster) : null
+  const found = cluster ? tooltipAt(image, cluster) : null
+  if (found) return found
+  // 星のないイベントリングや、黄色い見出しを星と誤認した場合は、
+  // 説明欄の大きなアイコン枠を起点にその説明欄だけを調べる。
+  const wells = iconWells(image, { x: 0, y: 0, w: image.width, h: image.height })
+    .filter((well) => well.w >= 48 && well.h >= 48)
+    .sort((a, b) => near
+      ? Math.hypot(a.x - near.x, a.y - near.y) - Math.hypot(b.x - near.x, b.y - near.y)
+      : a.y - b.y)
+  for (const icon of wells) {
+    const anchor = { x: icon.x + icon.w + 12, y: icon.y - 25, w: icon.w, h: 1, stars: 0 }
+    const body = readTooltipBody(image, anchor)
+    if (body.w < icon.w * 2.5 || body.w > icon.w * 6 || body.h < icon.h * 2 ||
+        icon.x < body.x || icon.x + icon.w > body.x + body.w) continue
+    const stars = locateStarCluster(image, 36, undefined, {
+      x: body.x, y: body.y, w: body.w, h: Math.max(1, icon.y - body.y),
+    })
+    const nameAnchor = stars ?? { x: body.x + 8, y: body.y + 2, w: body.w - 16, h: 0, stars: 0 }
+    const name = readTooltipNameRect(image, nameAnchor, icon)
+    if (!name) continue
+    return { icon, body, name, stars: stars?.stars ?? 0 }
+  }
+  return null
 }
 
 function isTooltipDark(r: number, g: number, b: number): boolean {
@@ -902,10 +936,10 @@ function overlaps(icon: CaptureRect, x: number, y: number): boolean {
 
 /** 説明欄の中の、1行ずつの文字帯。アイコンと★の列は除く。 */
 export function tooltipTextLines(image: CaptureImage, body: CaptureRect, icon: CaptureRect): CaptureRect[] {
-  const x1 = body.x + 4
-  const x2 = body.x + body.w - 2
+  const x1 = body.x + 12
+  const x2 = body.x + body.w - 12
   const rows: number[] = []
-  for (let y = body.y; y < body.y + body.h; y += 1) {
+  for (let y = body.y + 6; y < body.y + body.h - 4; y += 1) {
     let count = 0
     let yellow = 0
     for (let x = x1; x < x2; x += 1) {
@@ -915,12 +949,13 @@ export function tooltipTextLines(image: CaptureImage, body: CaptureRect, icon: C
       count += 1
       if (isStarYellow(r, g, b)) yellow += 1
     }
-    if (count >= 10 && yellow < count * 0.5) rows.push(y)
+    // 黄色い潜在見出しも必要。星列はアイコンより上なので範囲で除外する。
+    if (count >= 6 && (y >= icon.y - 45 || yellow < count * 0.5)) rows.push(y)
   }
   const bands: { y: number; end: number }[] = []
   for (const y of rows) {
     const last = bands[bands.length - 1]
-    if (last && y <= last.end + 1) last.end = y
+    if (last && y <= last.end + 2) last.end = y
     else bands.push({ y, end: y })
   }
   const lines: CaptureRect[] = []
@@ -943,7 +978,7 @@ export function tooltipTextLines(image: CaptureImage, body: CaptureRect, icon: C
       w: Math.min(image.width - left, right - left + 5),
       h: band.end - band.y + 3,
     })
-    if (lines.length >= 36) break
+    if (lines.length >= 64) break
   }
   return lines
 }
@@ -1218,6 +1253,7 @@ export function clearCapturedEquipment(data: AppData, characterId: string): AppD
 }
 
 export type EquipmentRead = {
+  imageDataUrl?: string
   starForce?: number
   name?: string
   stats?: { label: string; value: string }[]
@@ -1247,7 +1283,7 @@ export function applyEquipmentInfo(
     enhanceText: info.enhanceText ?? item.enhanceText,
     potentials: info.potentials ?? item.potentials,
     additionalPotentials: info.additionalPotentials ?? item.additionalPotentials,
-    imageDataUrl: item.imageDataUrl,
+    imageDataUrl: info.imageDataUrl || item.imageDataUrl,
     notes: info.notes ?? item.notes,
   }
   const current = {
