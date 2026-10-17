@@ -1082,14 +1082,27 @@ function locateStarCluster(
   for (const line of lines) {
     if (line.length < 5 || !line.some((mark) => mark.yellow)) continue
     const left = Math.min(...line.map((mark) => mark.x))
-    const right = Math.max(...line.map((mark) => mark.x + mark.w))
-    const cy = line[0]?.cy ?? 0
-    const below = lines.find((other) => {
-      const gap = (other[0]?.cy ?? 0) - cy
+    let right = Math.max(...line.map((mark) => mark.x + mark.w))
+    let bottom = line[0]?.cy ?? 0
+    const cluster = [...line]
+    // JMS tooltip starforce can wrap onto several lines (e.g. 15 + 5 + 2 for ★22).
+    // Follow each aligned row instead of stopping after the first continuation.
+    for (const other of lines) {
+      const cy = other[0]?.cy ?? 0
+      const gap = cy - bottom
       const otherLeft = Math.min(...other.map((mark) => mark.x))
-      return gap > starHeight && gap < starHeight * 3.5 && otherLeft >= left - starHeight && otherLeft <= right
-    })
-    clusters.push(below ? [...line, ...below] : line)
+      if (
+        gap > starHeight &&
+        gap < starHeight * 3.5 &&
+        otherLeft >= left - starHeight &&
+        otherLeft <= right
+      ) {
+        cluster.push(...other)
+        right = Math.max(right, ...other.map((mark) => mark.x + mark.w))
+        bottom = cy
+      }
+    }
+    clusters.push(cluster)
   }
   return starCluster(clusters, near)
 }
@@ -1385,7 +1398,9 @@ export function applyEquipmentCapture(
       enhanceText: existing?.enhanceText ?? '',
       potentials: existing?.potentials ?? [],
       additionalPotentials: existing?.additionalPotentials ?? [],
-      imageDataUrl: slot.imageDataUrl,
+      // The inventory icon is captured first and carries useful rarity/grade cues.
+      // Tooltip icons are for matching only and must not replace that original.
+      imageDataUrl: existing?.imageDataUrl ?? slot.imageDataUrl,
       notes: existing?.notes || '画面から読み取り',
     }
     next = upsertItem(next, input, {

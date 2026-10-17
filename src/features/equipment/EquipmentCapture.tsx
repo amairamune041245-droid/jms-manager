@@ -19,7 +19,7 @@ import { matchItemName, slotGroupForItem } from '../../domain/equipmentSets.ts'
 import { parseTooltipLines } from '../../domain/tooltipText.ts'
 import type { TooltipDetails } from '../../domain/tooltipText.ts'
 import { EQUIPMENT_SLOTS, slotById } from '../../domain/equipmentSlots.ts'
-import type { EquipmentSlotGroup, EquipmentSlotId } from '../../domain/equipmentSlots.ts'
+import type { EquipmentSlotId } from '../../domain/equipmentSlots.ts'
 import { useAppStore } from '../app/useAppStore.ts'
 
 type Mode = 'capture'
@@ -157,13 +157,20 @@ function crop(
   return canvas.toDataURL(type, quality)
 }
 
+/** 装備画面中央の広い背景領域から、キャラクターが立つ中央部分を切り出す。 */
+function centeredPortrait(rect: CaptureRect): CaptureRect {
+  const w = rect.w * 0.64
+  const h = rect.h * 0.62
+  return {
+    x: rect.x + (rect.w - w) / 2,
+    y: rect.y + rect.h * 0.32,
+    w,
+    h,
+  }
+}
+
 const idleNote =
   '装備にマウスを乗せて説明を表示すると、アイコン・★・装備詳細をまとめて読み取ります（Ctrl+Vでスクショ貼り付け・画像選択も可）。'
-
-const CONFIRM_GROUPS = new Set<EquipmentSlotGroup>([
-  'ring',
-  'pendant',
-])
 
 type TooltipPreview = {
   key: string
@@ -324,7 +331,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
       presetIndex: located.presetIndex,
       portraitDataUrl:
         portraitChanged && located.characterVisible
-          ? crop(context, located.character, 320, 'image/jpeg', 0.86) || null
+          ? crop(context, centeredPortrait(located.character), 320, 'image/jpeg', 0.86) || null
           : null,
       slots: changed.map((slot) => ({
         id: slot.id,
@@ -435,7 +442,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
       cursorSlot ??
       chooseHoveredSlot({ distances, cursorSlot, namedSlots }) ??
       (namedSlots.length === 1 ? (namedSlots[0] ?? null) : null)
-    const needsConfirm = !slotId || CONFIRM_GROUPS.has(slotById(slotId).group)
+    const needsConfirm = !slotId
     setPreview((current) =>
       current?.key === shotKey
         ? { ...current, slotId: slotId ?? current.slotId, name: readName ?? current.name }
@@ -469,7 +476,6 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     const nameFits = Boolean(readName && (!chosenGroup || slotById(slotId).group === chosenGroup))
     ensureSlotIcon(slotId, iconUrl)
     setSlotEquipmentInfo(characterId, slotId, {
-      imageDataUrl: iconUrl,
       ...(hovered.stars !== null ? { starForce: hovered.stars } : {}),
       ...(nameFits && readName ? { name: readName } : {}),
     })
@@ -526,7 +532,6 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     confirmedSlotRef.current = { key: preview.key, slotId }
     ensureSlotIcon(slotId, preview.iconUrl)
     setSlotEquipmentInfo(characterId, slotId, {
-      imageDataUrl: preview.iconUrl,
       ...(preview.stars !== null ? { starForce: preview.stars } : {}),
       ...(preview.name.trim() ? { name: preview.name.trim() } : {}),
       ...detailPayload(preview.details),
@@ -885,4 +890,3 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     </div>
   )
 }
-
