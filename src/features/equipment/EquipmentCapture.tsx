@@ -204,6 +204,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
   const [hasDisplayStream, setHasDisplayStream] = useState(false)
   const stopRef = useRef<(() => void) | null>(null)
   const mediaRef = useRef<{ stream: MediaStream; video: HTMLVideoElement } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const noteRef = useRef(note)
   const pendingRef = useRef('')
   const keyRef = useRef('')
@@ -831,6 +832,13 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
         >
           {mode ? '装備読み取りを止める' : '装備を読み取る'}
         </button>
+        <button
+          type="button"
+          className="button-quiet"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          スクショ画像を読む
+        </button>
         {hasDisplayStream ? (
           <button type="button" className="button-quiet" onClick={() => void reselectScreen()}>
             画面を選び直す
@@ -839,6 +847,17 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
         <button type="button" className="button-quiet" onClick={clearReadings}>
           読み取った装備を外す
         </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={(event) => {
+            const file = event.target.files?.[0]
+            if (file) void handleBlobFrame(file)
+            event.target.value = ''
+          }}
+        />
       </div>
       <p className={failed ? 'capture-note error' : 'capture-note'}>{note}</p>
       {preview ? (
