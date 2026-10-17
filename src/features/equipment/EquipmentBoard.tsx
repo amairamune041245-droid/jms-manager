@@ -97,7 +97,7 @@ export function EquipmentBoard({ character }: { character: Character }) {
           })}
         </div>
         <PresetBar characterId={character.id} loadout={loadout} />
-        <div className="eq-tab-row" role="group" aria-label="称号とメダル">
+        {tabs.length > 0 ? <div className="eq-tab-row" role="group" aria-label="追加装備">
           {tabs.map((slot) => {
             const item = findItem(data, preset.slots[slot.id])
             return (
@@ -114,7 +114,7 @@ export function EquipmentBoard({ character }: { character: Character }) {
               </button>
             )
           })}
-        </div>
+        </div> : null}
         </div>
         <ActiveSetEffects
           pieces={EQUIPMENT_SLOTS.flatMap((slot) => {
@@ -157,3 +157,4 @@ export function EquipmentBoard({ character }: { character: Character }) {
     </section>
   )
 }
+

@@ -33,8 +33,8 @@ export const EQUIPMENT_SLOTS = [
   { id: 'ring2', label: '指輪2', group: 'ring' },
   { id: 'ring3', label: '指輪3', group: 'ring' },
   { id: 'ring4', label: '指輪4', group: 'ring' },
-  { id: 'badge', label: 'バッジ', group: 'badge' },
-  { id: 'face', label: '顔飾り', group: 'face' },
+  { id: 'badge', label: '顔飾り', group: 'face' },
+  { id: 'face', label: '目飾り', group: 'eye' },
   { id: 'earring', label: '耳飾り', group: 'earring' },
   { id: 'pendant2', label: 'ペンダント2', group: 'pendant' },
   { id: 'pendant1', label: 'ペンダント1', group: 'pendant' },
@@ -45,7 +45,7 @@ export const EQUIPMENT_SLOTS = [
   { id: 'cape', label: 'マント', group: 'cape' },
   { id: 'gloves', label: '手袋', group: 'gloves' },
   { id: 'shoes', label: '靴', group: 'shoes' },
-  { id: 'medal', label: 'メダル', group: 'medal' },
+  { id: 'medal', label: 'バッジ', group: 'badge' },
   { id: 'belt', label: 'ベルト', group: 'belt' },
   { id: 'weapon', label: '武器', group: 'weapon' },
   { id: 'subWeapon', label: '補助武器', group: 'subWeapon' },
@@ -54,9 +54,6 @@ export const EQUIPMENT_SLOTS = [
   { id: 'heart', label: 'ハート', group: 'heart' },
   { id: 'pocket', label: 'ポケット', group: 'pocket' },
   { id: 'androidHeart', label: 'アンドロイドハート', group: 'androidHeart' },
-  { id: 'title', label: '称号', group: 'title' },
-  { id: 'eye', label: '眼飾り', group: 'eye' },
-  { id: 'overall', label: '全身', group: 'overall' },
 ] as const
 
 export type EquipmentSlotId = (typeof EQUIPMENT_SLOTS)[number]['id']
@@ -78,3 +75,4 @@ export function isSlotGroup(value: string): value is EquipmentSlotGroup {
 export function labelForSlotGroup(group: EquipmentSlotGroup): string {
   return SLOT_GROUPS.find((entry) => entry.id === group)?.label ?? group
 }
+
