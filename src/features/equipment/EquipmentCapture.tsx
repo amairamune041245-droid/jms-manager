@@ -140,6 +140,19 @@ function tone(image: CaptureImage, rect: CaptureRect): string {
   return `${Math.round(red / count / 18)}-${Math.round(green / count / 18)}-${Math.round(blue / count / 18)}`
 }
 
+function averageBrightness(image: CaptureImage, rect: CaptureRect): number {
+  let sum = 0
+  let count = 0
+  for (let y = Math.max(0, rect.y); y < Math.min(image.height, rect.y + rect.h); y += 4) {
+    for (let x = Math.max(0, rect.x); x < Math.min(image.width, rect.x + rect.w); x += 4) {
+      const index = (y * image.width + x) * 4
+      sum += ((image.data[index] ?? 0) + (image.data[index + 1] ?? 0) + (image.data[index + 2] ?? 0)) / 3
+      count += 1
+    }
+  }
+  return count ? sum / count : 0
+}
+
 function crop(
   source: CanvasRenderingContext2D,
   rect: CaptureRect,
@@ -157,37 +170,12 @@ function crop(
   return canvas.toDataURL(type, quality)
 }
 
-/** MapleStory's character art is pixel art; enlarge it without smoothing away the pixels. */
-function cropPixelPortrait(source: CanvasRenderingContext2D, rect: CaptureRect): string {
-  const scale = Math.min(4, 320 / Math.max(rect.w, rect.h))
-  const canvas = document.createElement('canvas')
-  canvas.width = Math.max(1, Math.round(rect.w * scale))
-  canvas.height = Math.max(1, Math.round(rect.h * scale))
-  const context = canvas.getContext('2d')
-  if (!context) return ''
-  context.imageSmoothingEnabled = false
-  context.drawImage(source.canvas, rect.x, rect.y, rect.w, rect.h, 0, 0, canvas.width, canvas.height)
-  return canvas.toDataURL('image/png')
-}
-
-/** 装備画面中央の広い背景領域から、キャラクターが立つ中央部分を切り出す。 */
-function centeredPortrait(rect: CaptureRect): CaptureRect {
-  const w = rect.w * 0.64
-  const h = rect.h * 0.62
-  return {
-    x: rect.x + (rect.w - w) / 2,
-    y: rect.y + rect.h * 0.32,
-    w,
-    h,
-  }
-}
-
 const idleNote =
   '装備にマウスを乗せて説明を表示すると、アイコン・★・装備詳細をまとめて読み取ります。説明が閉じると中央キャラクターの画像を保存します。'
 
 type TooltipPreview = {
   key: string
-  imageUrl: string
+  needsConfirm: true
   iconUrl: string
   stars: number | null
   slotId: EquipmentSlotId | ''
@@ -223,6 +211,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
   const keyRef = useRef('')
   const seenRef = useRef(0)
   const toneRef = useRef<Record<string, string>>({})
+  const portraitFreshRef = useRef(false)
   const emptyRef = useRef<Record<string, number>>({})
   const gridRef = useRef<WindowGrid | null>(null)
   const shownKeyRef = useRef('')
@@ -315,7 +304,10 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     const characterTone = located.characterVisible ? tone(image, located.character) : 'hidden'
     // Tooltips are drawn over the middle of the equipment window and can cover the avatar.
     // Wait for a clear frame before saving its portrait.
-    const portraitCanCapture = located.characterVisible && !readHoveredTooltip(image, cursor)
+    const portraitCanCapture =
+      located.characterVisible &&
+      !readHoveredTooltip(image, cursor) &&
+      averageBrightness(image, located.character) >= 105
     const signature = [String(located.presetIndex), ...held.map((slot) => `${slot.id}:${slot.state}:${slot.tone}`)].join(
       '|',
     )
@@ -331,8 +323,12 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
       located.presetIndex === null ? '今開いているプリセット' : `プリセット${located.presetIndex + 1}`
     const skipped = located.slots.length - visible.length
     const tail = skipped > 0 ? `隠れていた${skipped}枠は前のままです。` : ''
+    // Earlier captures were small JPEGs. Refresh them from the full centre panel
+    // even if the character has not moved since the last scan.
+    const savedPortrait = dataRef.current.characters.find((entry) => entry.id === characterId)?.portraitDataUrl
     const portraitChanged =
-      immediate || toneRef.current.character !== settleTone('character', characterTone)
+      immediate || !portraitFreshRef.current || !savedPortrait || savedPortrait.startsWith('data:image/jpeg;') ||
+      toneRef.current.character !== settleTone('character', characterTone)
     const portraitNeedsUpdate = portraitCanCapture && portraitChanged
     if (!immediate && signature === keyRef.current && !portraitNeedsUpdate) {
       show(`${presetLabel}のアイコンは取り込み済みです。${tail}`)
@@ -344,12 +340,15 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     if (changed.length === 0 && !portraitNeedsUpdate && signature === keyRef.current) return true
     keyRef.current = signature
     for (const slot of changed) toneRef.current[slot.id] = `${slot.state}:${slot.tone}`
-    if (portraitNeedsUpdate) toneRef.current.character = settleTone('character', characterTone)
+    if (portraitNeedsUpdate) {
+      toneRef.current.character = settleTone('character', characterTone)
+      portraitFreshRef.current = true
+    }
     const input: EquipmentCaptureInput = {
       presetIndex: located.presetIndex,
       portraitDataUrl:
         portraitNeedsUpdate
-          ? cropPixelPortrait(context, centeredPortrait(located.character)) || null
+          ? crop(context, located.character, 512, 'image/png') || null
           : null,
       slots: changed.map((slot) => ({
         id: slot.id,
@@ -437,15 +436,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     if (shownKeyRef.current === shotKey) return true
     shownKeyRef.current = shotKey
     confirmedSlotRef.current = null
-    setPreview({
-      key: shotKey,
-      imageUrl: shot,
-      iconUrl,
-      stars: hovered.stars,
-      slotId: cursorSlot ?? '',
-      name: '',
-      details: null,
-    })
+    setPreview(null)
     const readName = hovered.name ? matchItemName(await recognizeName(context, hovered.name)) : null
     if (sessionRef.current !== session) return true
     const group = readName ? slotGroupForItem(readName) : null
@@ -461,13 +452,17 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
       chooseHoveredSlot({ distances, cursorSlot, namedSlots }) ??
       (namedSlots.length === 1 ? (namedSlots[0] ?? null) : null)
     const needsConfirm = !slotId
-    setPreview((current) =>
-      current?.key === shotKey
-        ? { ...current, slotId: slotId ?? current.slotId, name: readName ?? current.name }
-        : current,
-    )
     if (sessionRef.current !== session) return true
     if (needsConfirm || !slotId) {
+      setPreview({
+        key: shotKey,
+        needsConfirm: true,
+        iconUrl,
+        stars: hovered.stars,
+        slotId: '',
+        name: readName ?? '',
+        details: null,
+      })
       show(
         slotId
           ? `${slotById(slotId).label}の説明です。枠を確認して付けてください。`
@@ -555,6 +550,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
       ...detailPayload(preview.details),
     })
     show(`${slotById(slotId).label}に${[preview.name.trim(), preview.stars === null ? '★未確認' : `★${preview.stars}`].filter(Boolean).join('、')}を付けました。`)
+    setPreview(null)
   }
 
   async function recognizeName(context: CanvasRenderingContext2D, rect: CaptureRect): Promise<string> {
@@ -873,9 +869,8 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
         />
       </div>
       <p className={failed ? 'capture-note error' : 'capture-note'}>{note}</p>
-      {preview ? (
+      {preview?.needsConfirm ? (
         <div className="capture-confirm">
-          <img className="capture-preview" src={preview.imageUrl} alt="取り込んだ装備の説明" />
           <label className="field">
             <span className="field-label">枠</span>
             <select

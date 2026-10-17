@@ -900,7 +900,6 @@ textarea,
 
 .eq-character.captured img {
   object-fit: cover;
-  image-rendering: pixelated;
 }
 
 .eq-character img,
@@ -1814,13 +1813,6 @@ textarea,
 .gacha-table td:last-child,
 .gacha-table th:last-child {
   text-align: right;
-}
-
-.capture-preview {
-  width: min(100%, 360px);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
 }
 
 .capture-confirm {
