@@ -170,7 +170,7 @@ function centeredPortrait(rect: CaptureRect): CaptureRect {
 }
 
 const idleNote =
-  '装備にマウスを乗せて説明を表示すると、アイコン・★・装備詳細をまとめて読み取ります（Ctrl+Vでスクショ貼り付け・画像選択も可）。'
+  '装備にマウスを乗せて説明を表示すると、アイコン・★・装備詳細をまとめて読み取ります。説明が閉じると中央キャラクターの画像を保存します。'
 
 type TooltipPreview = {
   key: string
@@ -784,7 +784,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     haltCapture()
     const session = sessionRef.current
     setMode('capture')
-    show('ゲームで装備にマウスを乗せてください。装備一覧のアイコンと、対象装備の★・詳細を読み取ります。')
+    show('ゲームで装備にマウスを乗せてください。アイコン・★・詳細を読み取り、説明が閉じた後に中央キャラクターの画像を保存します。')
     loop(session)
   }
 
