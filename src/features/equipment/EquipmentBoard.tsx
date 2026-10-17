@@ -54,16 +54,22 @@ export function EquipmentBoard({ character }: { character: Character }) {
           style={{ aspectRatio: `${EQUIPMENT_BOARD.width} / ${EQUIPMENT_BOARD.height}` }}
         >
           <div
-            className="eq-character"
+            className={character.portraitDataUrl ? 'eq-character captured' : 'eq-character'}
             style={frameStyle(EQUIPMENT_CHARACTER)}
           >
             <div className="eq-portrait">
-              <div className="eq-silhouette">{character.name.slice(0, 2)}</div>
+              {character.portraitDataUrl ? (
+                <img src={character.portraitDataUrl} alt={`${character.name}の画像`} />
+              ) : (
+                <div className="eq-silhouette">{character.name.slice(0, 2)}</div>
+              )}
             </div>
-            <p className="eq-character-meta">
-              <span>{character.job || '職業未設定'}</span>
-              {character.level !== null ? <span>Lv.{character.level}</span> : null}
-            </p>
+            {character.portraitDataUrl ? null : (
+              <p className="eq-character-meta">
+                <span>{character.job || '職業未設定'}</span>
+                {character.level !== null ? <span>Lv.{character.level}</span> : null}
+              </p>
+            )}
           </div>
           {paperdoll.map((slot) => {
             const item = findItem(data, preset.slots[slot.id])
