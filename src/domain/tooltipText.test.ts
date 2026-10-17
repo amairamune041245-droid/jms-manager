@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
 import { parseTooltipLines, tooltipDetailSignature } from './tooltipText.ts'
+
+it('reads all additional lines from the live earring OCR', () => {
+  const text = readFileSync(new URL('./fixtures/live-earring-ocr.txt', import.meta.url), 'utf8')
+  const detail = parseTooltipLines(text.split('\n'))
+  expect(detail.additionalPotentials).toEqual([
+    { text: '魔力 +10' }, { text: '最大HP +60' }, { text: '移動速度 +4' },
+  ])
+  expect(detail.potentials).toHaveLength(3)
+})
 
 describe('parseTooltipLines', () => {
   it('keeps only lines that match a known item field', () => {
@@ -104,4 +114,21 @@ describe('parseTooltipLines', () => {
     expect(detail.notes).toContain('潜在能力: ユニーク')
     expect(detail.notes).toContain('アディショナル潜在能力: エピック')
   })
+})
+
+it('recognizes the additional heading and Japanese OCR label variants', () => {
+  const parsed = parseTooltipLines([
+    '最 ÄHP + 4000', '最 ÄMP + 4000', '防 P カ + 867',
+    '潜 在 能 力 レ ジ ェ ン ダ リ ー', 'INT + 12 %',
+    'ア テ ィ シ ョ ナ ) レ 潜 在 宣 ヒ カ', '魔 カ + 10',
+    '最 ÄHP + 60', '移 釛 速 度 + 4',
+  ])
+  expect(parsed.stats).toEqual([
+    { label: '最大HP', value: '+4000' }, { label: '最大MP', value: '+4000' },
+    { label: '防御力', value: '+867' },
+  ])
+  expect(parsed.potentials).toEqual([{ text: 'INT +12%' }])
+  expect(parsed.additionalPotentials).toEqual([
+    { text: '魔力 +10' }, { text: '最大HP +60' }, { text: '移動速度 +4' },
+  ])
 })

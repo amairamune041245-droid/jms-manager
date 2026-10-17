@@ -63,6 +63,10 @@ function compactLine(raw: string): string {
 
 function normalizeOcrLine(compact: string): string {
   return compact
+    .replace(/ア[テデ][ィイ]シ[ョコ]ナ(?:ル|\)レ)/g, 'アディショナル')
+    .replace(/最[ÄＡA]([HM]P)/gi, '最大$1')
+    .replace(/移[勒釛]?速度/g, '移動速度')
+    .replace(/^防Pカ/, '防御力')
     .replace(/^[.．,、0〇ロ「】・]+/, '')
     .replace(/(?:文機|交機)不可/g, '交換不可')
     .replace(/全ス[テデ]ー*タス/g, '全ステータス')

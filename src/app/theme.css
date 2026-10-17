@@ -1815,13 +1815,6 @@ textarea,
   text-align: right;
 }
 
-.capture-preview {
-  width: min(100%, 360px);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
-}
-
 .capture-confirm {
   display: grid;
   gap: 8px;

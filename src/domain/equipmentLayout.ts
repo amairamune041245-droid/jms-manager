@@ -64,8 +64,8 @@ export const EQUIPMENT_SLOT_FRAMES = {
 
 export type PaperdollSlotId = keyof typeof EQUIPMENT_SLOT_FRAMES
 
-/** Title is the lower tab. Eye and overall have no cell on that paperdoll. */
-export const DOCK_SLOT_IDS = ['title', 'eye', 'overall'] as const satisfies readonly EquipmentSlotId[]
+/** JMSにない称号・眼飾り・全身の追加欄は表示しない。 */
+export const DOCK_SLOT_IDS = [] as const satisfies readonly EquipmentSlotId[]
 
 export function isPaperdollSlot(id: EquipmentSlotId): id is PaperdollSlotId {
   return id in EQUIPMENT_SLOT_FRAMES
@@ -84,3 +84,4 @@ export function frameStyle(frame: SlotFrame): {
     height: `${frame.h * 100}%`,
   }
 }
+

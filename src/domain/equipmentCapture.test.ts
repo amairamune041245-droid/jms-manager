@@ -408,6 +408,20 @@ describe('equipment window capture', () => {
       applyEquipmentInfo(detailed, 'c1', 'hat', { starForce: undefined }, 'same'),
     ).toBe(detailed)
 
+    // 説明のアイコン・星・能力値を同じ装備へ保存し、既存のメモを保持する。
+    const combined = applyEquipmentInfo(detailed, 'c1', 'hat', {
+      imageDataUrl: 'data:image/png;base64,tooltip-icon',
+      starForce: 22,
+      stats: [{ label: 'INT', value: '+80' }],
+    }, 'combined')
+    expect(combined.items.find((item) => item.id === 'capture:c1:1:hat')).toMatchObject({
+      imageDataUrl: 'data:image/png;base64,tooltip-icon',
+      starForce: 22,
+      stats: [{ label: 'INT', value: '+80' }],
+      notes: '交換不可',
+    })
+    expect(combined.loadoutsByCharacterId).toEqual(detailed.loadoutsByCharacterId)
+
     const recaptured = applyEquipmentCapture(
       starred,
       'c1',
@@ -567,4 +581,38 @@ describe('real equipment screenshot', () => {
     expect(reading?.grid.originY).toBe(offsetY + ORIGIN_Y)
     expect(reading?.slots.filter((slot) => slot.state === 'filled').length).toBe(25)
   })
+})
+
+describe('2026-10-17 JPEG capture regressions', () => {
+  const fixture = (stamp: string) => decodePng(readFileSync(
+    new URL(`./fixtures/capture-${stamp}.png`, import.meta.url),
+  ))
+  it('locates the real 45px inventory grid instead of the portrait background', () => {
+    const found = locateEquipmentWindow(fixture('181657'))
+    expect(found?.grid.originX).toBeCloseTo(256, 0)
+    expect(found?.grid.pitch).toBeCloseTo(45, 0)
+    expect(found?.slots.find((slot) => slot.id === 'cape')?.x).toBeGreaterThan(520)
+    expect(readHoveredTooltip(fixture('181657'))).toBeNull()
+  })
+  it.each([
+    ['181659', 18, 568, 875],
+    ['181703', 17, 346, 653],
+    ['181706', null, 300, 606],
+  ] as const)('reads %s including starless items without the adjacent set panel', (stamp, stars, iconX, right) => {
+    const frame = fixture(stamp)
+    const tip = readHoveredTooltip(frame, null)
+    expect(tip).not.toBeNull()
+    expect(tip?.stars).toBe(stars)
+    expect(tip?.icon.x).toBeCloseTo(iconX, 0)
+    if (!tip) return
+    expect(tip.body.x + tip.body.w).toBeLessThanOrEqual(right)
+    const lines = tooltipTextLines(frame, tip.body, tip.icon)
+    expect(lines.some((line) => line.y > (stamp === '181703' ? 720 : 650))).toBe(true)
+    expect(lines.every((line) => line.x + line.w <= right)).toBe(true)
+  })
+})
+
+it('reads all 17 stars from a live shared screen with alternating pixel spacing', () => {
+  const frame = decodePng(readFileSync(new URL('./fixtures/live-earring.png', import.meta.url)))
+  expect(readHoveredTooltip(frame)?.stars).toBe(17)
 })
