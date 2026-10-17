@@ -204,7 +204,6 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
   const [hasDisplayStream, setHasDisplayStream] = useState(false)
   const stopRef = useRef<(() => void) | null>(null)
   const mediaRef = useRef<{ stream: MediaStream; video: HTMLVideoElement } | null>(null)
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const noteRef = useRef(note)
   const pendingRef = useRef('')
   const keyRef = useRef('')
@@ -300,6 +299,9 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     const visible = located.slots.filter((slot) => slot.state !== 'hidden' && slot.id !== hover)
     const held = visible.map((slot) => holdSlot(image, slot))
     const characterTone = located.characterVisible ? tone(image, located.character) : 'hidden'
+    // Tooltips are drawn over the middle of the equipment window and can cover the avatar.
+    // Wait for a clear frame before saving its portrait.
+    const portraitCanCapture = located.characterVisible && !readHoveredTooltip(image, cursor)
     const signature = [String(located.presetIndex), ...held.map((slot) => `${slot.id}:${slot.state}:${slot.tone}`)].join(
       '|',
     )
@@ -315,22 +317,24 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
       located.presetIndex === null ? '今開いているプリセット' : `プリセット${located.presetIndex + 1}`
     const skipped = located.slots.length - visible.length
     const tail = skipped > 0 ? `隠れていた${skipped}枠は前のままです。` : ''
-    if (!immediate && signature === keyRef.current) {
+    const portraitChanged =
+      immediate || toneRef.current.character !== settleTone('character', characterTone)
+    const portraitNeedsUpdate = portraitCanCapture && portraitChanged
+    if (!immediate && signature === keyRef.current && !portraitNeedsUpdate) {
       show(`${presetLabel}のアイコンは取り込み済みです。${tail}`)
       return true
     }
     const changed = immediate
       ? held
       : held.filter((slot) => toneRef.current[slot.id] !== `${slot.state}:${slot.tone}`)
-    const portraitChanged = immediate || toneRef.current.character !== settleTone('character', characterTone)
-    if (changed.length === 0 && !portraitChanged && signature === keyRef.current) return true
+    if (changed.length === 0 && !portraitNeedsUpdate && signature === keyRef.current) return true
     keyRef.current = signature
     for (const slot of changed) toneRef.current[slot.id] = `${slot.state}:${slot.tone}`
-    if (portraitChanged) toneRef.current.character = settleTone('character', characterTone)
+    if (portraitNeedsUpdate) toneRef.current.character = settleTone('character', characterTone)
     const input: EquipmentCaptureInput = {
       presetIndex: located.presetIndex,
       portraitDataUrl:
-        portraitChanged && located.characterVisible
+        portraitNeedsUpdate
           ? crop(context, centeredPortrait(located.character), 320, 'image/jpeg', 0.86) || null
           : null,
       slots: changed.map((slot) => ({
@@ -827,13 +831,6 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
         >
           {mode ? '装備読み取りを止める' : '装備を読み取る'}
         </button>
-        <button
-          type="button"
-          className="button-quiet"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          スクショ画像を読む
-        </button>
         {hasDisplayStream ? (
           <button type="button" className="button-quiet" onClick={() => void reselectScreen()}>
             画面を選び直す
@@ -842,17 +839,6 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
         <button type="button" className="button-quiet" onClick={clearReadings}>
           読み取った装備を外す
         </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          style={{ display: 'none' }}
-          onChange={(event) => {
-            const file = event.target.files?.[0]
-            if (file) void handleBlobFrame(file)
-            event.target.value = ''
-          }}
-        />
       </div>
       <p className={failed ? 'capture-note error' : 'capture-note'}>{note}</p>
       {preview ? (
