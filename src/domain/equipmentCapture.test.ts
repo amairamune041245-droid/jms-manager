@@ -597,7 +597,7 @@ describe('2026-10-17 JPEG capture regressions', () => {
   it.each([
     ['181659', 18, 568, 875],
     ['181703', 17, 346, 653],
-    ['181706', 0, 300, 606],
+    ['181706', null, 300, 606],
   ] as const)('reads %s including starless items without the adjacent set panel', (stamp, stars, iconX, right) => {
     const frame = fixture(stamp)
     const tip = readHoveredTooltip(frame, null)
@@ -610,4 +610,9 @@ describe('2026-10-17 JPEG capture regressions', () => {
     expect(lines.some((line) => line.y > (stamp === '181703' ? 720 : 650))).toBe(true)
     expect(lines.every((line) => line.x + line.w <= right)).toBe(true)
   })
+})
+
+it('reads all 17 stars from a live shared screen with alternating pixel spacing', () => {
+  const frame = decodePng(readFileSync(new URL('./fixtures/live-earring.png', import.meta.url)))
+  expect(readHoveredTooltip(frame)?.stars).toBe(17)
 })

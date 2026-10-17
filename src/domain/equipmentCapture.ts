@@ -761,8 +761,11 @@ function starCluster(clusters: StarMark[][], near?: { x: number; y: number }): S
 function regularRuns(row: StarMark[], starHeight: number): StarMark[][] {
   const sorted = [...row].sort((a, b) => a.cx - b.cx)
   const gaps = sorted.slice(1).map((mark, index) => mark.cx - (sorted[index]?.cx ?? 0))
-  const step = Math.min(...gaps.filter((gap) => gap >= starHeight * 0.9))
-  if (!Number.isFinite(step)) return sorted.length === 1 ? [sorted] : []
+  const minimum = Math.min(...gaps.filter((gap) => gap >= starHeight * 0.9))
+  if (!Number.isFinite(minimum)) return sorted.length === 1 ? [sorted] : []
+  // 画面共有の拡縮では同じ間隔が10px/12pxのように交互に丸まる。
+  // 最小値だけを基準にすると、正しい星の列を途中で分断してしまう。
+  const step = median(gaps.filter((gap) => gap >= minimum && gap <= minimum * 1.5))
   const runs: StarMark[][] = []
   let run: StarMark[] = []
   let inGroup = 0
@@ -786,7 +789,7 @@ function regularRuns(row: StarMark[], starHeight: number): StarMark[][] {
 }
 
 export type HoveredTooltip = {
-  stars: number
+  stars: number | null
   icon: CaptureRect
   name: CaptureRect | null
   /** クエストヘルパーを含まない、アイテム説明そのものの範囲。 */
@@ -817,7 +820,7 @@ function tooltipAt(image: CaptureImage, cluster: StarCluster): HoveredTooltip | 
   }).filter((well) => {
     const gap = well.y - (cluster.y + cluster.h)
     const overlaps = well.x < cluster.x + cluster.w + 12 && well.x + well.w > cluster.x - 12
-    return gap >= -2 && gap < Math.max(28, cluster.h * 6) && overlaps
+    return gap >= -2 && gap < Math.max(28, cluster.h * 6) && overlaps && well.h >= Math.max(32, cluster.h * 1.8)
   })
   const chosen = [...below].sort((a, b) => a.y - b.y || Math.abs(a.x - cluster.x) - Math.abs(b.x - cluster.x))[0]
   if (!chosen) return null
@@ -852,17 +855,18 @@ export function readHoveredTooltip(
       ? Math.hypot(a.x - near.x, a.y - near.y) - Math.hypot(b.x - near.x, b.y - near.y)
       : a.y - b.y)
   for (const icon of wells) {
-    const anchor = { x: icon.x + icon.w + 12, y: icon.y - 25, w: icon.w, h: 1, stars: 0 }
+    const scale = icon.w / 78
+    const anchor = { x: icon.x + icon.w + Math.round(12 * scale), y: icon.y - Math.round(25 * scale), w: icon.w, h: 1, stars: 0 }
     const body = readTooltipBody(image, anchor)
     if (body.w < icon.w * 2.5 || body.w > icon.w * 6 || body.h < icon.h * 2 ||
         icon.x < body.x || icon.x + icon.w > body.x + body.w) continue
-    const stars = locateStarCluster(image, 36, undefined, {
+    const stars = locateStarCluster(image, Math.round(36 * scale), undefined, {
       x: body.x, y: body.y, w: body.w, h: Math.max(1, icon.y - body.y),
     })
     const nameAnchor = stars ?? { x: body.x + 8, y: body.y + 2, w: body.w - 16, h: 0, stars: 0 }
     const name = readTooltipNameRect(image, nameAnchor, icon)
     if (!name) continue
-    return { icon, body, name, stars: stars?.stars ?? 0 }
+    return { icon, body, name, stars: stars?.stars ?? null }
   }
   return null
 }

@@ -161,18 +161,13 @@ const idleNote =
 const CONFIRM_GROUPS = new Set<EquipmentSlotGroup>([
   'ring',
   'pendant',
-  'badge',
-  'face',
-  'earring',
-  'belt',
-  'pocket',
 ])
 
 type TooltipPreview = {
   key: string
   imageUrl: string
   iconUrl: string
-  stars: number
+  stars: number | null
   slotId: EquipmentSlotId | ''
   name: string
   details: TooltipDetails | null
@@ -473,10 +468,10 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     ensureSlotIcon(slotId, iconUrl)
     setSlotEquipmentInfo(characterId, slotId, {
       imageDataUrl: iconUrl,
-      starForce: hovered.stars,
+      ...(hovered.stars !== null ? { starForce: hovered.stars } : {}),
       ...(nameFits && readName ? { name: readName } : {}),
     })
-    show(`${slotById(slotId).label}に${[nameFits ? readName : '', `★${hovered.stars}`].filter(Boolean).join('、')}を付けました。`)
+    show(`${slotById(slotId).label}に${[nameFits ? readName : '', hovered.stars === null ? '★未確認' : `★${hovered.stars}`].filter(Boolean).join('、')}を付けました。`)
     await readDetails(context, image, hovered).then((detail) => {
       if (sessionRef.current !== session) return
       if (!detail) {
@@ -486,7 +481,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
       }
       ensureSlotIcon(slotId, iconUrl)
       setSlotEquipmentInfo(characterId, slotId, detailPayload(detail.fields))
-      show(`${slotById(slotId).label}のアイコン・★${hovered.stars}・装備詳細を保存しました。`)
+      show(`${slotById(slotId).label}のアイコン・${hovered.stars === null ? '★未確認' : `★${hovered.stars}`}・装備詳細を保存しました。`)
     })
     return true
   }
@@ -530,11 +525,11 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     ensureSlotIcon(slotId, preview.iconUrl)
     setSlotEquipmentInfo(characterId, slotId, {
       imageDataUrl: preview.iconUrl,
-      starForce: preview.stars,
+      ...(preview.stars !== null ? { starForce: preview.stars } : {}),
       ...(preview.name.trim() ? { name: preview.name.trim() } : {}),
       ...detailPayload(preview.details),
     })
-    show(`${slotById(slotId).label}に${[preview.name.trim(), `★${preview.stars}`].filter(Boolean).join('、')}を付けました。`)
+    show(`${slotById(slotId).label}に${[preview.name.trim(), preview.stars === null ? '★未確認' : `★${preview.stars}`].filter(Boolean).join('、')}を付けました。`)
   }
 
   async function recognizeName(context: CanvasRenderingContext2D, rect: CaptureRect): Promise<string> {
@@ -890,7 +885,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
               onChange={(event) => setPreview({ ...preview, name: event.target.value })}
             />
           </label>
-          <p>★{preview.stars}</p>
+          <p>{preview.stars === null ? '★ 未確認（保存済みの値を維持）' : `★${preview.stars}`}</p>
           <button type="button" onClick={applyPreview}>
             この説明を付ける
           </button>

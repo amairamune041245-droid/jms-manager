@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
 import { parseTooltipLines, tooltipDetailSignature } from './tooltipText.ts'
+
+it('reads all additional lines from the live earring OCR', () => {
+  const text = readFileSync(new URL('./fixtures/live-earring-ocr.txt', import.meta.url), 'utf8')
+  const detail = parseTooltipLines(text.split('\n'))
+  expect(detail.additionalPotentials).toEqual([
+    { text: '魔力 +10' }, { text: '最大HP +60' }, { text: '移動速度 +4' },
+  ])
+  expect(detail.potentials).toHaveLength(3)
+})
 
 describe('parseTooltipLines', () => {
   it('keeps only lines that match a known item field', () => {
