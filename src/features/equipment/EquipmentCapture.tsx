@@ -22,7 +22,7 @@ import { EQUIPMENT_SLOTS, slotById } from '../../domain/equipmentSlots.ts'
 import type { EquipmentSlotGroup, EquipmentSlotId } from '../../domain/equipmentSlots.ts'
 import { useAppStore } from '../app/useAppStore.ts'
 
-type Mode = 'icons' | 'info'
+type Mode = 'capture'
 
 type Frame = {
   image: CaptureImage
@@ -674,7 +674,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
     return () => window.removeEventListener('paste', onPaste)
   })
 
-  function loop(session: number, next: Mode) {
+  function loop(session: number) {
     const canvas = document.createElement('canvas')
     const context = canvas.getContext('2d', { willReadFrequently: true })
     if (!context) {
@@ -701,8 +701,8 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
         context,
         cursor: null,
       }
-      if (next === 'icons') readIcons(frame)
-      else await readInfo(frame)
+      readIcons(frame)
+      await readInfo(frame)
     }
     const pull = async () => {
       if (stopped || busy || sessionRef.current !== session) return
@@ -749,8 +749,8 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
           context,
           cursor,
         }
-        if (next === 'icons') readIcons(frame)
-        else await readInfo(frame)
+        readIcons(frame)
+        await readInfo(frame)
       } catch {
         if (sessionRef.current === session) {
           useBrowserCapture = true
@@ -767,20 +767,16 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
         busy = false
       }
     }
-    timer = window.setInterval(() => void pull(), next === 'info' ? 700 : 900)
+    timer = window.setInterval(() => void pull(), 700)
     void pull()
   }
 
-  function start(next: Mode) {
+  function start() {
     haltCapture()
     const session = sessionRef.current
-    setMode(next)
-    show(
-      next === 'icons'
-        ? 'アイコンを取り込んでいます。マウスは装備から外しておいてください。'
-        : 'ゲームで装備にマウスを乗せてください。同じ画面からアイコン・★・装備詳細をまとめて読みます。',
-    )
-    loop(session, next)
+    setMode('capture')
+    show('ゲームで装備にマウスを乗せてください。装備一覧のアイコンと、対象装備の★・詳細を読み取ります。')
+    loop(session)
   }
 
   async function reselectScreen() {
@@ -790,7 +786,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
       show('画面の選択がキャンセルされました。', true)
       return
     }
-    start(mode ?? 'info')
+    start()
   }
 
   const captured = data.items.some((item) => item.id.startsWith(`capture:${characterId}:`))
@@ -821,17 +817,10 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
       <div className="capture-actions">
         <button
           type="button"
-          className={mode === 'icons' ? 'button-quiet' : 'link-button'}
-          onClick={() => (mode === 'icons' ? stop() : start('icons'))}
+          className={mode ? 'button-quiet' : 'link-button'}
+          onClick={() => (mode ? stop() : start())}
         >
-          {mode === 'icons' ? 'アイコン取り込みを止める' : 'アイコンを取り込む'}
-        </button>
-        <button
-          type="button"
-          className={mode === 'info' ? 'button-quiet' : 'link-button'}
-          onClick={() => (mode === 'info' ? stop() : start('info'))}
-        >
-          {mode === 'info' ? 'まとめて読み取りを止める' : 'アイコン・装備詳細をまとめて読む'}
+          {mode ? '装備読み取りを止める' : '装備を読み取る'}
         </button>
         <button
           type="button"
