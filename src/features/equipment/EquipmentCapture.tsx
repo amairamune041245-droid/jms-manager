@@ -157,6 +157,19 @@ function crop(
   return canvas.toDataURL(type, quality)
 }
 
+/** MapleStory's character art is pixel art; enlarge it without smoothing away the pixels. */
+function cropPixelPortrait(source: CanvasRenderingContext2D, rect: CaptureRect): string {
+  const scale = Math.min(4, 320 / Math.max(rect.w, rect.h))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.max(1, Math.round(rect.w * scale))
+  canvas.height = Math.max(1, Math.round(rect.h * scale))
+  const context = canvas.getContext('2d')
+  if (!context) return ''
+  context.imageSmoothingEnabled = false
+  context.drawImage(source.canvas, rect.x, rect.y, rect.w, rect.h, 0, 0, canvas.width, canvas.height)
+  return canvas.toDataURL('image/png')
+}
+
 /** 装備画面中央の広い背景領域から、キャラクターが立つ中央部分を切り出す。 */
 function centeredPortrait(rect: CaptureRect): CaptureRect {
   const w = rect.w * 0.64
@@ -336,7 +349,7 @@ export function EquipmentCapture({ characterId }: { characterId: string }) {
       presetIndex: located.presetIndex,
       portraitDataUrl:
         portraitNeedsUpdate
-          ? crop(context, centeredPortrait(located.character), 320, 'image/jpeg', 0.86) || null
+          ? cropPixelPortrait(context, centeredPortrait(located.character)) || null
           : null,
       slots: changed.map((slot) => ({
         id: slot.id,
